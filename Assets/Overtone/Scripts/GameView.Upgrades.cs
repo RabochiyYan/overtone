@@ -72,7 +72,8 @@ namespace Overtone
             bool canBuy=!selectedLocked && current<maximum && session.Upgrades.points>=PhaseTwoUpgrades.Cost(selectedKind,nextLevel) && allowed && session.Lives>0;
             string buy=selectedLocked ? "ВЕТКА ЗАБЛОКИРОВАНА" : current==maximum ? "МАКСИМАЛЬНЫЙ УРОВЕНЬ" : !allowed ? "ПОКУПКА ДО ПУБЛИКАЦИИ" : "УЛУЧШИТЬ / "+PhaseTwoUpgrades.Cost(selectedKind,nextLevel)+" Б.";
             Button("BuyUpgrade",details,buy,28,385,494,60,()=>session.BuyUpgrade(selectedKind),canBuy,true);
-            Text("UpgradeHint",panel,"Либеральная и консервативная ветки исключают друг друга. Выбор действует до конца рабочего дня. Бонусы умножаются, предел — 100%.",36,680,920,60,18,Palette.Muted);
+            Text("UpgradeHint",panel,"Либеральная и консервативная ветки исключают друг друга. Выбор действует до конца рабочего дня. Бонусы умножаются, предел — 100%.",36,662,640,96,18,Palette.Muted);
+            Button("UpgradeInstructions",panel,"ИНСТРУКЦИЯ",704,683,286,54,OpenInstructions);
             Button("CloseUpgrades",panel,"ВЕРНУТЬСЯ  /  ESC",1010,683,330,54,CloseUpgrades);
         }
     }

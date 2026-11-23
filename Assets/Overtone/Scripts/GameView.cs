@@ -27,7 +27,7 @@ namespace Overtone
         Vector2 networkScrollPosition;
         float networkZoom;
         ScrollRect networkScroll;
-        AudioSource audioSource;
+        AudioSource audioSource, musicSource;
         AudioClip tone, errorTone;
         bool muted;
         public void Start()
@@ -46,6 +46,7 @@ namespace Overtone
             }
             errorTone=AudioClip.Create("Wrong answer double buzzer",errorSamples.Length,1,44100,false); errorTone.SetData(errorSamples,0);
             muted=PlayerPrefs.GetInt("Overtone.Muted",0)==1;
+            InitializeMusic();
             session.Initialize();
         }
         void OnEnable() { if(session!=null) session.Changed+=Render; }
@@ -66,11 +67,29 @@ namespace Overtone
                 if(timerFill!=null)timerFill.sizeDelta=new Vector2(240*Mathf.Clamp01(session.SortingTimeLeft/Mathf.Max(1,session.settings.sortingSeconds)),4);
             }
             var k=Keyboard.current; if(k==null) return;
-            if(k.escapeKey.wasPressedThisFrame) { if(session.UpgradeWindowOpen) CloseUpgrades(); else if(networkSettingsModal!=null) CloseNetworkSettings(); else session.TogglePause(); }
+            if(k.escapeKey.wasPressedThisFrame) { if(session.InstructionsWindowOpen) CloseInstructions(); else if(session.UpgradeWindowOpen) CloseUpgrades(); else if(networkSettingsModal!=null) CloseNetworkSettings(); else session.TogglePause(); }
             if(session.Phase==GamePhase.Sorting && !session.Paused) {
                 if(k.leftArrowKey.wasPressedThisFrame || k.aKey.wasPressedThisFrame) session.Sort(false);
                 if(k.rightArrowKey.wasPressedThisFrame || k.dKey.wasPressedThisFrame) session.Sort(true);
             }
+        }
+        void InitializeMusic()
+        {
+            if(musicSource!=null) return;
+            var clip=Resources.Load<AudioClip>("OvertoneMusic");
+            if(clip==null) return;
+            musicSource=gameObject.AddComponent<AudioSource>();
+            musicSource.playOnAwake=false; musicSource.loop=true; musicSource.spatialBlend=0;
+            musicSource.volume=.25f; musicSource.pitch=1; musicSource.mute=muted;
+            musicSource.clip=clip;
+            musicSource.Play();
+        }
+        public void SetMuted(bool value)
+        {
+            muted=value;
+            if(musicSource!=null) musicSource.mute=value;
+            if(audioSource!=null) audioSource.mute=value;
+            PlayerPrefs.SetInt("Overtone.Muted",value ? 1 : 0); PlayerPrefs.Save();
         }
         public void PlayTone(float frequency)
         {
@@ -141,7 +160,7 @@ namespace Overtone
             content=Rect("Screen",stage,0,0,1600,900);
             Box("Backdrop",content,0,0,1600,900,Palette.Background);
             //Text("Ministry",content,"МИНИСТЕРСТВО М  /  СТРАНА N",96,22,800,36,18,Palette.Muted,true);
-            Button("Sound",content,muted ? "ЗВУК: ВЫКЛ" : "ЗВУК: ВКЛ",1390,20,170,42,()=>{muted=!muted; PlayerPrefs.SetInt("Overtone.Muted",muted?1:0); PlayerPrefs.Save(); Render();});
+            Button("Sound",content,muted ? "ЗВУК: ВЫКЛ" : "ЗВУК: ВКЛ",1390,20,170,42,()=>{SetMuted(!muted); Render();});
             //Text("Footer",content,"ВНУТРЕННЯЯ СИСТЕМА  •  УЧЕБНЫЙ ПРОТОТИП",40,856,900,30,16,Palette.Muted);
             //Text("Build",content,"ОВЕРТОН  /  01",1330,856,230,30,16,Palette.Muted);
             switch(session.Phase) {
@@ -153,6 +172,7 @@ namespace Overtone
             }
             RenderPause();
             if(session.UpgradeWindowOpen) DrawUpgrades();
+            if(session.InstructionsWindowOpen) DrawInstructions(); else Clear(ref instructionsModal);
         }
         void Menu()
         {
@@ -349,6 +369,7 @@ namespace Overtone
             if(session.SelectedChannel>=0) Text("SelectedSeed",left,"Старт: "+session.Network[session.SelectedChannel].name,24,552,452,24,17,Palette.Accent);
             bool ready=session.SelectedChannel>=0 && session.SelectedOption>=0 && session.Phase==GamePhase.Editing;
             Button("Publish",left,session.Phase==GamePhase.Spreading ? "РАСПРОСТРАНЕНИЕ…" : session.ChoosingSecondStart ? "ЗАПУСТИТЬ ЕЩЁ КАНАЛ  →" : "ОПУБЛИКОВАТЬ  →",24,584,452,62,session.Publish,ready,true);
+            Button("Instructions",content,"ИНСТРУКЦИЯ",580,20,250,42,OpenInstructions);
             Button("Upgrades",content,"УЛУЧШЕНИЯ  /  "+session.Upgrades.points+" Б.",850,20,290,42,OpenUpgrades);
             Button("NetworkSettings",left,"НАСТРОЙКИ СЕТИ И СЛОЖНОСТИ",24,494,452,44,OpenNetworkSettings,session.Phase==GamePhase.Editing && !session.ChoosingSecondStart);
             Text("SettingsHint",left,"Параметры можно изменить до публикации.",24,654,452,20,13,Palette.Muted);
@@ -520,6 +541,7 @@ namespace Overtone
             Text("PauseInfo",modal,"Рабочий день приостановлен.\nПри выходе сохранится начало текущего задания.",450,330,700,110,27,Palette.Muted);
             Button("Resume",modal,"ПРОДОЛЖИТЬ",450,480,700,66,session.TogglePause,true,true);
             Button("Exit",modal,"В главное меню",450,570,700,66,session.ReturnToMenu);
+            if(IsPhaseTwo) Button("PauseInstructions",modal,"ИНСТРУКЦИЯ",450,660,700,54,OpenInstructions);
         }
     }
     public sealed class NewsCardDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
