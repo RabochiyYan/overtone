@@ -29,6 +29,7 @@ namespace Overtone
         ScrollRect networkScroll;
         AudioSource audioSource, musicSource;
         AudioClip tone, errorTone;
+        int musicTrack;
         bool muted;
         public void Start()
         {
@@ -67,8 +68,8 @@ namespace Overtone
                 if(timerFill!=null)timerFill.sizeDelta=new Vector2(240*Mathf.Clamp01(session.SortingTimeLeft/Mathf.Max(1,session.settings.sortingSeconds)),4);
             }
             var k=Keyboard.current; if(k==null) return;
-            if(k.escapeKey.wasPressedThisFrame) { if(session.InstructionsWindowOpen) CloseInstructions(); else if(session.UpgradeWindowOpen) CloseUpgrades(); else if(networkSettingsModal!=null) CloseNetworkSettings(); else session.TogglePause(); }
-            if(session.Phase==GamePhase.Sorting && !session.Paused) {
+            if(k.escapeKey.wasPressedThisFrame) { if(session.MusicWindowOpen) CloseMusicSettings(); else if(session.InstructionsWindowOpen) CloseInstructions(); else if(session.UpgradeWindowOpen) CloseUpgrades(); else if(networkSettingsModal!=null) CloseNetworkSettings(); else session.TogglePause(); }
+            if(session.Phase==GamePhase.Sorting && !session.Paused && !session.MusicWindowOpen) {
                 if(k.leftArrowKey.wasPressedThisFrame || k.aKey.wasPressedThisFrame) session.Sort(false);
                 if(k.rightArrowKey.wasPressedThisFrame || k.dKey.wasPressedThisFrame) session.Sort(true);
             }
@@ -76,7 +77,8 @@ namespace Overtone
         void InitializeMusic()
         {
             if(musicSource!=null) return;
-            var clip=Resources.Load<AudioClip>("OvertoneMusic");
+            musicTrack=Mathf.Clamp(PlayerPrefs.GetInt("Overtone.MusicTrack",0),0,MusicResources.Length-1);
+            var clip=Resources.Load<AudioClip>(MusicResources[musicTrack]);
             if(clip==null) return;
             musicSource=gameObject.AddComponent<AudioSource>();
             musicSource.playOnAwake=false; musicSource.loop=true; musicSource.spatialBlend=0;
@@ -160,7 +162,8 @@ namespace Overtone
             content=Rect("Screen",stage,0,0,1600,900);
             Box("Backdrop",content,0,0,1600,900,Palette.Background);
             //Text("Ministry",content,"МИНИСТЕРСТВО М  /  СТРАНА N",96,22,800,36,18,Palette.Muted,true);
-            Button("Sound",content,muted ? "ЗВУК: ВЫКЛ" : "ЗВУК: ВКЛ",1390,20,170,42,()=>{SetMuted(!muted); Render();});
+            Button("Sound",content,muted ? "ЗВУК: ВЫКЛ" : "ЗВУК: ВКЛ",1414,20,146,42,()=>{SetMuted(!muted); Render();}).GetComponentInChildren<TextMeshProUGUI>().fontSize=17;
+            Button("Music",content,"МУЗЫКА",1228,20,170,42,OpenMusicSettings);
             //Text("Footer",content,"ВНУТРЕННЯЯ СИСТЕМА  •  УЧЕБНЫЙ ПРОТОТИП",40,856,900,30,16,Palette.Muted);
             //Text("Build",content,"ОВЕРТОН  /  01",1330,856,230,30,16,Palette.Muted);
             switch(session.Phase) {
@@ -173,6 +176,7 @@ namespace Overtone
             RenderPause();
             if(session.UpgradeWindowOpen) DrawUpgrades();
             if(session.InstructionsWindowOpen) DrawInstructions(); else Clear(ref instructionsModal);
+            if(session.MusicWindowOpen) DrawMusicSettings(); else Clear(ref musicModal);
         }
         void Menu()
         {
@@ -199,7 +203,7 @@ namespace Overtone
                 var heart=Rect("Life"+i,content,1400+i*31,83,24,24).gameObject.AddComponent<LifeIcon>();
                 heart.color=i<session.Lives ? Palette.Bad : Palette.Raised; heart.raycastTarget=false;
             }
-            Button("Pause",content,"ПАУЗА / ESC",1160,20,210,42,session.TogglePause);
+            Button("Pause",content,"ПАУЗА / ESC",1032,20,180,42,session.TogglePause);
         }
         void Sorting()
         {
@@ -369,8 +373,8 @@ namespace Overtone
             if(session.SelectedChannel>=0) Text("SelectedSeed",left,"Старт: "+session.Network[session.SelectedChannel].name,24,552,452,24,17,Palette.Accent);
             bool ready=session.SelectedChannel>=0 && session.SelectedOption>=0 && session.Phase==GamePhase.Editing;
             Button("Publish",left,session.Phase==GamePhase.Spreading ? "РАСПРОСТРАНЕНИЕ…" : session.ChoosingSecondStart ? "ЗАПУСТИТЬ ЕЩЁ КАНАЛ  →" : "ОПУБЛИКОВАТЬ  →",24,584,452,62,session.Publish,ready,true);
-            Button("Instructions",content,"ИНСТРУКЦИЯ",580,20,250,42,OpenInstructions);
-            Button("Upgrades",content,"УЛУЧШЕНИЯ  /  "+session.Upgrades.points+" Б.",850,20,290,42,OpenUpgrades);
+            Button("Instructions",content,"ИНСТРУКЦИЯ",550,20,210,42,OpenInstructions);
+            Button("Upgrades",content,"УЛУЧШЕНИЯ  /  "+session.Upgrades.points+" Б.",776,20,240,42,OpenUpgrades).GetComponentInChildren<TextMeshProUGUI>().fontSize=18;
             Button("NetworkSettings",left,"НАСТРОЙКИ СЕТИ И СЛОЖНОСТИ",24,494,452,44,OpenNetworkSettings,session.Phase==GamePhase.Editing && !session.ChoosingSecondStart);
             Text("SettingsHint",left,"Параметры можно изменить до публикации.",24,654,452,20,13,Palette.Muted);
             var graph=Box("NetworkGraph",content,564,190,996,686,new Color(.055f,.09f,.105f));

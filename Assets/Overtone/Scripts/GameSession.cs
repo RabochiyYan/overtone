@@ -56,6 +56,7 @@ namespace Overtone
         public PhaseTwoUpgrades Upgrades { get; private set; } = new PhaseTwoUpgrades();
         public bool UpgradeWindowOpen { get; set; }
         public bool InstructionsWindowOpen { get; set; }
+        public bool MusicWindowOpen { get; set; }
         public bool RetryUsed { get; private set; }
         public bool ChoosingSecondStart { get; private set; }
         public int RoundPoints { get; private set; }
@@ -101,7 +102,7 @@ namespace Overtone
         {
             double now=Time.realtimeSinceStartupAsDouble;
             float elapsed=(float)(now-clockSample);clockSample=now;
-            if(Phase!=GamePhase.Sorting || Paused || Lives<=0 || Folder>=settings.folderTarget) return;
+            if(Phase!=GamePhase.Sorting || Paused || MusicWindowOpen || Lives<=0 || Folder>=settings.folderTarget) return;
             SortingTimeLeft=Mathf.Max(0,SortingTimeLeft-elapsed);
             if(SortingTimeLeft>0) return;
             StopAllCoroutines(); Busy=false;
@@ -110,7 +111,7 @@ namespace Overtone
         }
         public void StartRun()
         {
-            StopAllCoroutines(); UpgradeWindowOpen=false; InstructionsWindowOpen=false; Paused=false; Busy=false; Lives=settings.startingLives;
+            StopAllCoroutines(); UpgradeWindowOpen=false; InstructionsWindowOpen=false; MusicWindowOpen=false; Paused=false; Busy=false; Lives=settings.startingLives;
             Folder=0; CardIndex=0; Round=0; SuccessfulRounds=0; runSeed=Environment.TickCount;
             ShuffleSortingNews();
             networkSeed=Guid.NewGuid().GetHashCode();
@@ -255,7 +256,7 @@ namespace Overtone
                     CheckProgress=0; NewWave.Clear(); Notify();
                     float elapsed=0;
                     while(elapsed<settings.checkDuration) {
-                        if(!Paused && !UpgradeWindowOpen && !InstructionsWindowOpen) elapsed+=Time.unscaledDeltaTime;
+                        if(!Paused && !UpgradeWindowOpen && !InstructionsWindowOpen && !MusicWindowOpen) elapsed+=Time.unscaledDeltaTime;
                         CheckProgress=Mathf.Clamp01(elapsed/Mathf.Max(.01f,settings.checkDuration));
                         yield return null;
                     }
@@ -281,8 +282,8 @@ namespace Overtone
         }
         IEnumerator WaitUnpaused(float duration)
         {
-            for(float t=0;t<duration;) { if(!Paused && !UpgradeWindowOpen && !InstructionsWindowOpen) t+=Time.unscaledDeltaTime; yield return null; }
-            while(Paused || UpgradeWindowOpen || InstructionsWindowOpen) yield return null;
+            for(float t=0;t<duration;) { if(!Paused && !UpgradeWindowOpen && !InstructionsWindowOpen && !MusicWindowOpen) t+=Time.unscaledDeltaTime; yield return null; }
+            while(Paused || UpgradeWindowOpen || InstructionsWindowOpen || MusicWindowOpen) yield return null;
         }
         void ApplyWave(SpreadWave wave)
         {
@@ -331,7 +332,7 @@ namespace Overtone
         public void ReturnToMenu()
         {
             if(!(Phase==GamePhase.Spreading && RetryUsed) && Lives>0 && (Phase==GamePhase.Sorting && SortingTimeLeft>0 || Phase==GamePhase.Editing || Phase==GamePhase.Spreading || Phase==GamePhase.RoundResult)) Save();
-            StopAllCoroutines(); UpgradeWindowOpen=false; InstructionsWindowOpen=false; Busy=false; Paused=false; Phase=GamePhase.Menu; Notify();
+            StopAllCoroutines(); UpgradeWindowOpen=false; InstructionsWindowOpen=false; MusicWindowOpen=false; Busy=false; Paused=false; Phase=GamePhase.Menu; Notify();
         }
         void Save()
         {
