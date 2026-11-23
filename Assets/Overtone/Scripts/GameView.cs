@@ -356,7 +356,7 @@ namespace Overtone
             inspectedChannel=index;
             if(channelDetails==null || index<0 || index>=session.Network.Length) return;
             var n=session.Network[index];
-            channelDetails.text="№"+(index+1).ToString("00")+" / "+n.name+" / "+n.clusterName+" / "+(n.allTopics ? "все темы" : string.Join(" ",n.topics ?? new[]{n.topic}))+" / "+Count(n.audience)+" / "+Palette.CampName(n.camp);
+            channelDetails.text="№"+(index+1).ToString("00")+" / <b>"+n.name+"</b> / "+n.clusterName+" / "+(n.allTopics ? "все темы" : string.Join(" ",n.topics ?? new[]{n.topic}))+" / "+Count(n.audience)+" / "+Palette.CampName(n.camp);
         }
         void Network()
         {
@@ -422,6 +422,14 @@ namespace Overtone
                     var label=Text("StartTag",badge,"СТАРТ",0,0,46,13,9,Palette.Accent,true); label.alignment=TextAlignmentOptions.Center;
                 }
                 if(session.NewWave.Contains(i)) StartCoroutine(PopNode(rt));
+            }
+            for(int i=0;i<session.Network.Length;i++) {
+                var n=session.Network[i]; var center=Position(i); float radius=Radius(i);
+                var label=Text("ChannelName"+i,map,n.name,Mathf.Clamp(center.x-80,0,MediaNetwork.Width-160),center.y-radius-(n.canPublish ? 36 : 22),160,18,12,new Color(1,1,1,.55f));
+                label.alignment=TextAlignmentOptions.Center;
+                label.textWrappingMode=TextWrappingModes.NoWrap;
+                label.overflowMode=TextOverflowModes.Ellipsis;
+                label.richText=false;
             }
             var legendViewport=Box("TopicLegendViewport",graph,24,10,948,40,new Color(0,0,0,0),true);
             legendViewport.gameObject.AddComponent<RectMask2D>();
