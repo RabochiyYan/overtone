@@ -5,7 +5,7 @@ namespace Overtone
     public sealed class PrototypeSettings : ScriptableObject
     {
         public int folderTarget = 12;
-        public int startingLives = 3;
+        public int startingLives = 5;
         public float sortingSeconds = 30f;
         [Range(.2f,1f)] public float crossClusterMultiplier = .85f;
         public float waveDelay = 0.65f;

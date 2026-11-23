@@ -99,7 +99,7 @@ namespace Overtone
                 Network=MakeNetwork();view.ResetNetworkView();
                 Lives=s.lives; Folder=s.folder; CardIndex=s.cardIndex; Round=s.round;
                 SuccessfulRounds=s.successfulRounds; runSeed=s.runSeed; Busy=false; Paused=false; FailureReason="";
-                SortingTimeLeft=s.version>=2 ? Mathf.Clamp(s.sortingSeconds,0,settings.sortingSeconds) : settings.sortingSeconds;
+                SortingTimeLeft=s.version>=2 ? Mathf.Max(0,s.sortingSeconds) : settings.sortingSeconds;
                 clockSample=Time.realtimeSinceStartupAsDouble;
                 if(s.phase==(int)GamePhase.Sorting) { Phase=GamePhase.Sorting; Feedback="Рабочий день продолжается."; if(SortingTimeLeft<=0) {FailureReason="Время на проверку истекло. Папка не собрана.";Finish(false);return;} }
                 else PrepareRound();
@@ -110,7 +110,11 @@ namespace Overtone
         {
             if(Phase!=GamePhase.Sorting || Busy || Paused || SortingTimeLeft<=0) return;
             Busy=true; LastCorrect=intoFolder==CurrentCard.isReal;
-            if(LastCorrect) { if(intoFolder) Folder++; Feedback=intoFolder ? "ПРОВЕРЕНО / Новость добавлена в папку." : "ОТКЛОНЕНО / Фейк отправлен в корзину."; }
+            if(LastCorrect) {
+                SortingTimeLeft+=10f;
+                if(intoFolder) Folder++;
+                Feedback=intoFolder ? "ПРОВЕРЕНО / Новость добавлена в папку. +10 секунд." : "ОТКЛОНЕНО / Фейк отправлен в корзину. +10 секунд.";
+            }
             else { Lives--; Feedback=intoFolder ? "ОШИБКА / В папку попал фейк." : "ОШИБКА / Реальная новость потеряна."; }
             Notify(); if(LastCorrect) view.PlayTone(650); else view.PlaySortingErrorSound(); StartCoroutine(AfterSort(intoFolder));
         }

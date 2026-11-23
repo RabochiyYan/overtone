@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PrototypeSettings
   m_EditorClassIdentifier: Assembly-CSharp::Overtone.PrototypeSettings
   folderTarget: 12
-  startingLives: 3
+  startingLives: 5
   sortingSeconds: 30
   crossClusterMultiplier: 0.85
   waveDelay: 0.65

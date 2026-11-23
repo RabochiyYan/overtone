@@ -182,7 +182,7 @@ namespace Overtone
         }
         void Sorting()
         {
-            Header("ФАЗА 01  /  ВХОДЯЩИЕ","Соберите папку для начальства",$"Соберите папку за {session.settings.sortingSeconds:0} секунд. Реальные новости — вправо, фейки — влево.");
+            Header("ФАЗА 01  /  ВХОДЯЩИЕ","Соберите папку для начальства",$"Старт: {session.settings.sortingSeconds:0} сек. Верный ответ: +10 сек. Новости — вправо, фейки — влево.");
             var clock=Box("SortingClock",content,1320,132,240,48,Palette.Panel);
             Text("ClockLabel",clock,"ВРЕМЯ",12,11,94,30,18,Palette.Muted,true);
             int seconds=Mathf.CeilToInt(session.SortingTimeLeft);
