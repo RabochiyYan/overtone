@@ -36,25 +36,27 @@ namespace Overtone
             Text("UpgradeEconomy",panel,"1 балл за каждые 10 000 просмотров сверх плана. Остаток: "+Count(session.Upgrades.surplusViews)+" / 10 000. Баллы выдаются по итогам задания.",36,90,1300,56,20,Palette.Muted);
             for(int branch=0;branch<5;branch++) {
                 var kind=(UpgradeKind)branch;
+                bool locked=session.Upgrades.IsLocked(kind);
+                Color foreground=locked ? Color.gray : Palette.Paper;
                 float y=167+branch*100;
                 if(branch==upgradeSelection) Box("SelectedBranch",panel,24,y+8,340,84,Palette.Raised);
-                Text("Branch"+branch,panel,UpgradeTitles[branch],36,y+27,340,64,20,Palette.Paper,true);
+                Text("Branch"+branch,panel,UpgradeTitles[branch],36,y+27,340,64,20,foreground,true);
                 int level=session.Upgrades.Level(kind), max=PhaseTwoUpgrades.MaxLevel(kind);
                 for(int tier=1;tier<=max;tier++) {
                     int selected=branch, selectedTier=tier;
                     float x=400+(tier-1)*100;
                     bool owned=tier<=level, next=tier==level+1;
-                    if(tier>1) Line(panel,new Vector2(x-13,y+44),new Vector2(x+12,y+44),owned ? Palette.Accent : Palette.Muted,2);
+                    if(tier>1) Line(panel,new Vector2(x-13,y+44),new Vector2(x+12,y+44),!locked && owned ? Palette.Accent : Palette.Muted,2);
                     var rt=Rect("Hex"+branch+"_"+tier,panel,x,y,100,100);
                     var graphic=rt.gameObject.AddComponent<HexagonGraphic>();
-                    graphic.color=owned ? UpgradeRed : next ? new Color(.49f,.19f,.21f) : Palette.Raised;
+                    graphic.color=locked ? new Color(.26f,.26f,.26f) : owned ? UpgradeRed : next ? new Color(.49f,.19f,.21f) : Palette.Raised;
                     graphic.raycastTarget=true;
-                    var button=rt.gameObject.AddComponent<UnityEngine.UI.Button>(); button.targetGraphic=graphic;
+                    var button=rt.gameObject.AddComponent<UnityEngine.UI.Button>(); button.targetGraphic=graphic; button.interactable=!locked;
                     var colors=button.colors; colors.highlightedColor=new Color(1.35f,1.2f,1.2f); colors.selectedColor=colors.highlightedColor; button.colors=colors;
-                    button.onClick.AddListener(()=>{upgradeSelection=selected; DrawUpgrades();});
-                    var icon=Text("Mark",rt,UpgradeMarks[branch],22,10,56,35,28,Palette.Paper,true);icon.alignment=TextAlignmentOptions.Center;
-                    var label=Text("Tier",rt,(selectedTier==1 ? "I" : selectedTier==2 ? "II" : "III"),18,44,64,25,19,Palette.Paper,true);label.alignment=TextAlignmentOptions.Center;
-                    var cost=Text("Cost",rt,owned ? "ВЗЯТО" : PhaseTwoUpgrades.Cost(kind,tier)+" Б.",18,68,64,24,16,owned ? Palette.Paper : Palette.Accent);cost.alignment=TextAlignmentOptions.Center;
+                    if(!locked) button.onClick.AddListener(()=>{upgradeSelection=selected; DrawUpgrades();});
+                    var icon=Text("Mark",rt,UpgradeMarks[branch],22,10,56,35,28,foreground,true);icon.alignment=TextAlignmentOptions.Center;
+                    var label=Text("Tier",rt,(selectedTier==1 ? "I" : selectedTier==2 ? "II" : "III"),18,44,64,25,19,foreground,true);label.alignment=TextAlignmentOptions.Center;
+                    var cost=Text("Cost",rt,locked ? "ЗАКР." : owned ? "ВЗЯТО" : PhaseTwoUpgrades.Cost(kind,tier)+" Б.",18,68,64,24,16,locked ? Color.gray : owned ? Palette.Paper : Palette.Accent);cost.alignment=TextAlignmentOptions.Center;
                 }
             }
             var selectedKind=(UpgradeKind)upgradeSelection;
@@ -66,10 +68,11 @@ namespace Overtone
             Text("Effect",details,(current==maximum ? "Действует:\n" : "Следующий уровень:\n")+UpgradeEffect(selectedKind,nextLevel),28,148,494,220,23,Palette.Paper);
             bool allowed=session.Phase==GamePhase.Editing || session.Phase==GamePhase.RoundResult;
             if(session.Phase==GamePhase.RoundResult && !session.LastRoundWon && selectedKind==UpgradeKind.SecondStart) allowed=false;
-            bool canBuy=current<maximum && session.Upgrades.points>=PhaseTwoUpgrades.Cost(selectedKind,nextLevel) && allowed && session.Lives>0;
-            string buy=current==maximum ? "МАКСИМАЛЬНЫЙ УРОВЕНЬ" : !allowed ? "ПОКУПКА ДО ПУБЛИКАЦИИ" : "УЛУЧШИТЬ / "+PhaseTwoUpgrades.Cost(selectedKind,nextLevel)+" Б.";
+            bool selectedLocked=session.Upgrades.IsLocked(selectedKind);
+            bool canBuy=!selectedLocked && current<maximum && session.Upgrades.points>=PhaseTwoUpgrades.Cost(selectedKind,nextLevel) && allowed && session.Lives>0;
+            string buy=selectedLocked ? "ВЕТКА ЗАБЛОКИРОВАНА" : current==maximum ? "МАКСИМАЛЬНЫЙ УРОВЕНЬ" : !allowed ? "ПОКУПКА ДО ПУБЛИКАЦИИ" : "УЛУЧШИТЬ / "+PhaseTwoUpgrades.Cost(selectedKind,nextLevel)+" Б.";
             Button("BuyUpgrade",details,buy,28,385,494,60,()=>session.BuyUpgrade(selectedKind),canBuy,true);
-            Text("UpgradeHint",panel,"Уровни покупаются по порядку и действуют до конца рабочего дня. Бонусы вероятности умножаются, предел — 100%.",36,680,920,60,18,Palette.Muted);
+            Text("UpgradeHint",panel,"Либеральная и консервативная ветки исключают друг друга. Выбор действует до конца рабочего дня. Бонусы умножаются, предел — 100%.",36,680,920,60,18,Palette.Muted);
             Button("CloseUpgrades",panel,"ВЕРНУТЬСЯ  /  ESC",1010,683,330,54,CloseUpgrades);
         }
     }

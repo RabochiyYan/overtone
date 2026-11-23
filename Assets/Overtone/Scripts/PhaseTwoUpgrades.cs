@@ -21,9 +21,13 @@ namespace Overtone
         }
         public static int MaxLevel(UpgradeKind kind) { return kind==UpgradeKind.SecondStart ? 1 : 3; }
         public static int Cost(UpgradeKind kind,int level) { return kind==UpgradeKind.SecondStart ? 10 : level==1 ? 2 : level==2 ? 4 : 6; }
+        public bool IsLocked(UpgradeKind kind)
+        {
+            return kind==UpgradeKind.Liberal && conservative>0 || kind==UpgradeKind.Conservative && liberal>0;
+        }
         public bool Buy(UpgradeKind kind)
         {
-            if(!Enum.IsDefined(typeof(UpgradeKind),kind)) return false;
+            if(!Enum.IsDefined(typeof(UpgradeKind),kind) || IsLocked(kind)) return false;
             int level=Level(kind)+1;
             if(level>MaxLevel(kind) || points<Cost(kind,level)) return false;
             points-=Cost(kind,level);
