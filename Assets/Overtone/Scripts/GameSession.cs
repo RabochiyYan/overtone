@@ -16,7 +16,7 @@ namespace Overtone
         public PhaseTwoUpgrades upgrades;
         public bool retryUsed, choosingSecondStart, lastRoundWon;
         public int firstChannel=-1, selectedOption=-1, selectedChannel=-1, views, roundPoints;
-        public int[] reached, checkedEdges;
+        public int[] reached, checkedEdges, sortingOrder;
         public bool[] checkedPassed;
         public int crossTopicAttempts, waveNumber;
     }
@@ -35,8 +35,22 @@ namespace Overtone
         public int SelectedOption { get; private set; } = -1;
         public int SelectedChannel { get; private set; } = -1;
         public int Views { get; private set; }
-        public int Target { get { return Mathf.Max(1,Mathf.RoundToInt(BaseTarget*Tuning.targetMultiplier)); } }
-        public int BaseTarget { get { return settings.viewTargets[Mathf.Min(Round,settings.viewTargets.Length-1)]; } }
+        public int TotalNetworkViews { get { return Network==null ? 0 : Network.Sum(channel=>channel.audience); } }
+        public float BaseTargetShare
+        {
+            get {
+                // A recorded win raises the next assignment, not the result or reward of this one.
+                int wins=Mathf.Max(0,SuccessfulRounds-(Phase==GamePhase.RoundResult && LastRoundWon ? 1 : 0));
+                return Mathf.Lerp(.20f,.70f,news==null || news.rounds.Length<=1 ? 0 : wins/(float)(news.rounds.Length-1));
+            }
+        }
+        public int Target { get { return TargetForMultiplier(Tuning.targetMultiplier); } }
+        public int TargetForMultiplier(float multiplier)
+        {
+            int total=TotalNetworkViews;
+            int minimum=Mathf.CeilToInt(total*.20f), maximum=Mathf.FloorToInt(total*.70f);
+            return Mathf.Max(1,Mathf.Clamp(Mathf.RoundToInt(total*BaseTargetShare*multiplier),minimum,Mathf.Max(minimum,maximum)));
+        }
         public PhaseTwoTuning Tuning { get; private set; } = new PhaseTwoTuning();
         public int DefaultChannelCount { get { return channelCatalog.DefaultCount; } }
         public PhaseTwoUpgrades Upgrades { get; private set; } = new PhaseTwoUpgrades();
@@ -67,10 +81,11 @@ namespace Overtone
         public float CheckProgress { get; private set; }
         public readonly Dictionary<int,bool> CheckedConnections = new Dictionary<int,bool>();
         public static int ConnectionKey(int a,int b) { return (Math.Min(a,b)<<16)|Math.Max(a,b); }
-        public SortingNews CurrentCard { get { return sorting.cards[CardIndex % sorting.cards.Length]; } }
+        public SortingNews CurrentCard { get { int index=CardIndex % sorting.cards.Length; return sorting.cards[sortingOrder!=null ? sortingOrder[index] : index]; } }
         public NewsRound CurrentRound { get { return news.rounds[Round]; } }
         public event Action Changed;
         int runSeed,networkSeed;
+        int[] sortingOrder;
         MediaChannelList channelCatalog;
         double clockSample;
         SpreadSimulation simulation;
@@ -96,12 +111,24 @@ namespace Overtone
         {
             StopAllCoroutines(); UpgradeWindowOpen=false; Paused=false; Busy=false; Lives=settings.startingLives;
             Folder=0; CardIndex=0; Round=0; SuccessfulRounds=0; runSeed=Environment.TickCount;
+            ShuffleSortingNews();
+            networkSeed=Guid.NewGuid().GetHashCode();
+            Network=MakeNetwork();view.ResetNetworkView();
             SortingTimeLeft=settings.sortingSeconds; FailureReason=""; clockSample=Time.realtimeSinceStartupAsDouble;
             CheckingBatch.Clear(); LastBatch.Clear(); NewWave.Clear(); Reached.Clear(); CheckedConnections.Clear();
             Views=0; WaveNumber=0; CheckProgress=0; SelectedOption=-1; SelectedChannel=-1;
             Upgrades=new PhaseTwoUpgrades(); RetryUsed=false; ChoosingSecondStart=false; RoundPoints=0; firstChannel=-1;
             Phase=GamePhase.Sorting; Feedback="Проверьте источник. Реальные новости — в папку, фейки — в корзину.";
             Save(); Notify();
+        }
+        void ShuffleSortingNews()
+        {
+            sortingOrder=Enumerable.Range(0,sorting.cards.Length).ToArray();
+            var random=new System.Random(Guid.NewGuid().GetHashCode());
+            for(int i=sortingOrder.Length-1;i>0;i--) {
+                int j=random.Next(i+1);
+                int previous=sortingOrder[i];sortingOrder[i]=sortingOrder[j];sortingOrder[j]=previous;
+            }
         }
         public void ResumeRun()
         {
@@ -114,6 +141,9 @@ namespace Overtone
                 Upgrades=s.upgrades ?? new PhaseTwoUpgrades();
                 Network=MakeNetwork();view.ResetNetworkView();
                 Lives=s.lives; Folder=s.folder; CardIndex=s.cardIndex; Round=s.round;
+                sortingOrder=s.sortingOrder;
+                if(sortingOrder==null || sortingOrder.Length!=sorting.cards.Length || sortingOrder.Distinct().Count()!=sorting.cards.Length || sortingOrder.Any(i=>i<0 || i>=sorting.cards.Length))
+                    sortingOrder=Enumerable.Range(0,sorting.cards.Length).ToArray();
                 SuccessfulRounds=s.successfulRounds; runSeed=s.runSeed; Busy=false; Paused=false; FailureReason="";
                 SortingTimeLeft=s.version>=2 ? Mathf.Max(0,s.sortingSeconds) : settings.sortingSeconds;
                 clockSample=Time.realtimeSinceStartupAsDouble;
@@ -264,7 +294,12 @@ namespace Overtone
             if(Lives<=0) { Finish(false); return; }
             if(CanSecondStart) Lives--;
             if(Lives<=0) { Finish(false); return; }
-            Round++; if(Round>=news.rounds.Length) { Round=news.rounds.Length-1; Finish(true); } else PrepareRound();
+            Round++; if(Round>=news.rounds.Length) { Round=news.rounds.Length-1; Finish(true); }
+            else {
+                networkSeed=Guid.NewGuid().GetHashCode();
+                Network=MakeNetwork();view.ResetNetworkView();
+                PrepareRound();
+            }
         }
         public void ChooseSecondStart()
         {
@@ -303,7 +338,7 @@ namespace Overtone
             var phase=Phase==GamePhase.RoundResult ? GamePhase.RoundResult : Phase==GamePhase.Sorting && !phaseTwoReady ? GamePhase.Sorting : GamePhase.Editing;
             // Briefing must resume with the new phase's three lives.
             var s=new SessionSave { phase=(int)phase,lives=phaseTwoReady ? settings.startingLives : Lives,
-                folder=Folder,cardIndex=CardIndex+(Phase==GamePhase.Sorting && Busy ? 1 : 0),round=Round,successfulRounds=SuccessfulRounds,runSeed=runSeed,version=5,sortingSeconds=SortingTimeLeft,phaseTwo=Tuning,networkSeed=networkSeed,
+                folder=Folder,cardIndex=CardIndex+(Phase==GamePhase.Sorting && Busy ? 1 : 0),round=Round,successfulRounds=SuccessfulRounds,runSeed=runSeed,version=6,sortingOrder=sortingOrder,sortingSeconds=SortingTimeLeft,phaseTwo=Tuning,networkSeed=networkSeed,
                 crossTopicAttempts=simulation?.CrossTopicAttempts ?? 0,waveNumber=WaveNumber,checkedEdges=CheckedConnections.Keys.ToArray(),checkedPassed=CheckedConnections.Values.ToArray(),
                 upgrades=Upgrades,retryUsed=RetryUsed,choosingSecondStart=ChoosingSecondStart || Phase==GamePhase.Spreading && RetryUsed,firstChannel=firstChannel,
                 selectedOption=SelectedOption,selectedChannel=SelectedChannel,views=Views,reached=Reached.ToArray(),lastRoundWon=LastRoundWon,roundPoints=RoundPoints };

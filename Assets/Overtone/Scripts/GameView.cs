@@ -265,9 +265,9 @@ namespace Overtone
             networkSettingsModal=Box("NetworkSettingsOverlay",stage,0,0,1600,900,new Color(.025f,.045f,.05f,.94f),true);
             var panel=Box("NetworkSettingsPanel",networkSettingsModal,290,55,1020,790,Palette.Panel,true);
             Text("Title",panel,"НАСТРОЙКИ ВТОРОЙ ФАЗЫ",32,22,956,44,30,Palette.Paper,true);
-            Text("Description",panel,"Настройте план просмотров и устройство сети перед публикацией.",32,76,956,30,18,Palette.Muted);
+            Text("Description",panel,"План — 20–70% аудитории сети. Повышается только после успешного задания.",32,76,956,30,18,Palette.Muted);
             TuningSlider(panel,"Difficulty",0,"Сложность",.1f,3,tuningDraft.targetMultiplier,false,
-                v=>tuningDraft.targetMultiplier=v,()=>Count(Mathf.RoundToInt(session.BaseTarget*tuningDraft.targetMultiplier))+" просмотров",
+                v=>tuningDraft.targetMultiplier=v,()=>Count(session.TargetForMultiplier(tuningDraft.targetMultiplier))+" просмотров",
                 "Меньше просмотров","Больше просмотров");
             TuningSlider(panel,"ChannelCount",1,"Количество каналов",1,Mathf.Max(300,session.DefaultChannelCount),tuningDraft.Count(session.DefaultChannelCount),true,
                 v=>tuningDraft.channelCount=Mathf.RoundToInt(v),()=>tuningDraft.Count(session.DefaultChannelCount)+" каналов",
