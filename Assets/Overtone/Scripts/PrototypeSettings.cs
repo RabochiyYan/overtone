@@ -19,6 +19,6 @@ namespace Overtone
             Paper=Hex("#EEE5D1"), Ink=Hex("#223436"), Muted=Hex("#AFBDB4"), Accent=Hex("#D8B36A"),
             Good=Hex("#8FB89F"), Bad=Hex("#DB8479"), Stamp=Hex("#8D3D36"), Opp=Hex("#91B1D1"), Link=Hex("#8CA59D");
         public static Color CampColor(int camp) { return camp==0 ? Accent : camp==1 ? Opp : Good; }
-        public static string CampName(int camp) { return camp==0 ? "Провластный" : camp==1 ? "Оппозиционный" : "Нейтральный"; }
+        public static string CampName(int camp) { return camp==0 ? "Консервативный" : camp==1 ? "Либеральный" : "Нейтральный"; }
     }
 }

@@ -331,7 +331,7 @@ namespace Overtone
             inspectedChannel=index;
             if(channelDetails==null || index<0 || index>=session.Network.Length) return;
             var n=session.Network[index];
-            channelDetails.text="№"+(index+1).ToString("00")+" / "+n.name+" / "+n.clusterName+" / "+n.topic+" / "+Count(n.audience)+" / "+Palette.CampName(n.camp);
+            channelDetails.text="№"+(index+1).ToString("00")+" / "+n.name+" / "+n.clusterName+" / "+(n.allTopics ? "все темы" : string.Join(" ",n.topics ?? new[]{n.topic}))+" / "+Count(n.audience)+" / "+Palette.CampName(n.camp);
         }
         void Network()
         {

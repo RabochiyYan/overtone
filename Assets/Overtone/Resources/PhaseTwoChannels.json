@@ -1,6 +1,541 @@
 {
   "channels": [
     {
+      "name": "N-Today",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Telegram",
+      "camp": 0,
+      "audience": 1800,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "Картон",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 14500,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Мойка",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2100,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "Пила",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Блогер",
+      "camp": 0,
+      "audience": 4500,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Гордость и предупреждение",
+      "topic": "#культура",
+      "topics": [
+        "#культура",
+        "#общество",
+        "#наука"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 12000,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Серверянин",
+      "topic": "#технологии",
+      "topics": [
+        "#технологии",
+        "#культура"
+      ],
+      "platform": "ТВ",
+      "camp": 2,
+      "audience": 17800,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "системный блок",
+      "topic": "#технологии",
+      "topics": [
+        "#технологии",
+        "#культура"
+      ],
+      "platform": "ТВ",
+      "camp": 2,
+      "audience": 8500,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Тулянка",
+      "topic": "#культура",
+      "topics": [
+        "#культура"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 5800,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "ProГлянец",
+      "topic": "#культура",
+      "topics": [
+        "#культура",
+        "#шоубизнес"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2700,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "Theo Breaking",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Telegram",
+      "camp": 1,
+      "audience": 2600,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "Smetana monthly",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 6300,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Банка",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "ВК",
+      "camp": 0,
+      "audience": 13800,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Пригородный",
+      "topic": "#дом",
+      "topics": [
+        "#дом",
+        "#природа"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2300,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "Вокруг мира",
+      "topic": "#культура",
+      "topics": [
+        "#культура",
+        "#природа"
+      ],
+      "platform": "Блогер",
+      "camp": 2,
+      "audience": 12500,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Спесивец",
+      "topic": "#культура",
+      "topics": [
+        "#культура",
+        "#образование"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 15600,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Кошка.com",
+      "topic": "#культура",
+      "topics": [
+        "#культура",
+        "#общество"
+      ],
+      "platform": "ТВ",
+      "camp": 2,
+      "audience": 7400,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Вереница историй",
+      "topic": "#культура",
+      "topics": [
+        "#культура"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 12000,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Торговецъ",
+      "topic": "#экономика",
+      "topics": [
+        "#экономика"
+      ],
+      "platform": "Блогер",
+      "camp": 2,
+      "audience": 8200,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Мороз",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Блогер",
+      "camp": 1,
+      "audience": 4200,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Читаловка",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Telegram",
+      "camp": 0,
+      "audience": 1800,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "Внутрянка",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 14500,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "RLLY",
+      "topic": "#шоубизнес",
+      "topics": [
+        "#шоубизнес",
+        "#культура"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 22000,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "The N Times",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2100,
+      "canPublish": true,
+      "priority": true,
+      "allTopics": true
+    },
+    {
+      "name": "TinyOne",
+      "topic": "#психология",
+      "topics": [
+        "#психология",
+        "#дом"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 3200,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Князьград",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Блогер",
+      "camp": 0,
+      "audience": 4500,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Gorbes",
+      "topic": "#экономика",
+      "topics": [
+        "#экономика"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 9000,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Hi!",
+      "topic": "#шоубизнес",
+      "topics": [
+        "#шоубизнес",
+        "#психология"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 10500,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "НИА Новости",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2600,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "ДИКОБРАЗ",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 6300,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Внимание! Новости",
+      "topic": "#общество",
+      "topics": [
+        "#общество"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 13800,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "МетаНаука",
+      "topic": "#наука",
+      "topics": [
+        "#наука",
+        "#культура",
+        "#технологии"
+      ],
+      "platform": "ТВ",
+      "camp": 2,
+      "audience": 11200,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Clothed Science",
+      "topic": "#наука",
+      "topics": [
+        "#наука",
+        "#технологии"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2200,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "Аргентум",
+      "topic": "#здоровье",
+      "topics": [
+        "#здоровье"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 5600,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Медицинские вести",
+      "topic": "#здоровье",
+      "topics": [
+        "#здоровье"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2400,
+      "canPublish": true,
+      "priority": true
+    },
+    {
+      "name": "Все дома",
+      "topic": "#дом",
+      "topics": [
+        "#дом"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 6600,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "HiTech News",
+      "topic": "#технологии",
+      "topics": [
+        "#технологии"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 6100,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Тополь.медиа",
+      "topic": "#природа",
+      "topics": [
+        "#природа"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 10400,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "ЭКОПОЛИС",
+      "topic": "#природа",
+      "topics": [
+        "#природа"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 9400,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Сплетница",
+      "topic": "#шоубизнес",
+      "topics": [
+        "#шоубизнес",
+        "#психология"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 22000,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Psy News",
+      "topic": "#психология",
+      "topics": [
+        "#психология"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 7800,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Красная ручка",
+      "topic": "#образование",
+      "topics": [
+        "#образование"
+      ],
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 3400,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Буря",
+      "topic": "#образование",
+      "topics": [
+        "#образование",
+        "#общество"
+      ],
+      "platform": "Блогер",
+      "camp": 1,
+      "audience": 3700,
+      "canPublish": false,
+      "priority": true
+    },
+    {
+      "name": "Голубой огонёк",
+      "topic": "#культура",
+      "topics": [
+        "#культура",
+        "#шоубизнес"
+      ],
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 5800,
+      "canPublish": false,
+      "priority": true
+    },
+    {
       "name": "Вестник N",
       "topic": "#общество",
       "platform": "Telegram",

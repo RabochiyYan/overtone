@@ -10,12 +10,20 @@ namespace Overtone
         public float x,y;
         public string platform;
         public string topic;
+        public string[] topics;
+        public bool allTopics;
+        public bool priority;
         public int camp;
         public int cluster;
         public string clusterName;
         public int audience;
         public bool canPublish;
         public int[] neighbors;
+
+        public bool CoversTopic(string value)
+        {
+            return allTopics || topic==value || (topics!=null && Array.IndexOf(topics,value)>=0);
+        }
     }
 
     public sealed class SpreadAttempt
@@ -97,7 +105,7 @@ namespace Overtone
 
         public static double Probability(NewsOption news, MediaChannel channel)
         {
-            double topic = channel.topic == news.topic ? 0.22 : -0.05;
+            double topic = channel.CoversTopic(news.topic) ? 0.22 : -0.05;
             double camp = channel.camp == news.camp ? 0.20 :
                 channel.camp == (int)Camp.Neutral || news.camp == (int)Camp.Neutral ? 0 : -0.20;
             double credibility = channel.camp == (int)Camp.Neutral ? 0.30 : 0.23;

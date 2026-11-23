@@ -32,7 +32,7 @@ namespace Overtone
         public int Target { get { return Mathf.Max(1,Mathf.RoundToInt(BaseTarget*Tuning.targetMultiplier)); } }
         public int BaseTarget { get { return settings.viewTargets[Mathf.Min(Round,settings.viewTargets.Length-1)]; } }
         public PhaseTwoTuning Tuning { get; private set; } = new PhaseTwoTuning();
-        public int DefaultChannelCount { get { return channelCatalog.channels.Length; } }
+        public int DefaultChannelCount { get { return channelCatalog.DefaultCount; } }
         public bool Paused { get; private set; }
         public bool Busy { get; private set; }
         public string Feedback { get; private set; } = "";

@@ -8,6 +8,7 @@ namespace Overtone
     public sealed class MediaChannelList
     {
         public MediaChannel[] channels;
+        public int DefaultCount { get { int count=channels.Count(n=>n!=null && n.priority); return count>0 ? count : channels.Length; } }
     }
 
     public sealed class MediaCommunity
@@ -34,21 +35,36 @@ namespace Overtone
         public static MediaChannel[] Create(MediaChannelList data) { return Create(data,Guid.NewGuid().GetHashCode()); }
         public static MediaChannel[] Create(MediaChannelList data,int seed) { return Create(data,seed,new PhaseTwoTuning()); }
 
+        static MediaChannel[] SelectChannels(MediaChannelList data,int count)
+        {
+            var preferred=data.channels.Where(n=>n!=null && n.priority).ToArray();
+            var fallback=data.channels.Where(n=>n==null || !n.priority).ToArray();
+            var ordered=preferred.Concat(fallback).ToArray();
+            if(ordered.Length==0) return new MediaChannel[0];
+            var repeats=fallback.Length>0 ? fallback : preferred;
+            return Enumerable.Range(0,count).Select(i=>i<ordered.Length ? ordered[i] : repeats[(i-ordered.Length)%repeats.Length]).ToArray();
+        }
+
         public static MediaChannel[] Create(MediaChannelList data,int seed,PhaseTwoTuning tuning)
         {
             if(data==null || data.channels==null)
                 throw new ArgumentException("PhaseTwoChannels.json: нужен массив channels (можно пустой).");
             tuning=(tuning ?? new PhaseTwoTuning()).Copy();tuning.Clamp(data.channels.Length);
-            int count=data.channels.Length==0 ? 0 : tuning.Count(data.channels.Length);
+            int count=data.channels.Length==0 ? 0 : tuning.Count(data.DefaultCount);
+            var selected=SelectChannels(data,count);
+            int repeatCount=data.channels.Count(n=>n==null || !n.priority);
+            if(repeatCount==0) repeatCount=data.channels.Length;
             var graph=new MediaChannel[count];
             for(int i=0;i<graph.Length;i++) {
-                int source=count<data.channels.Length ? i*data.channels.Length/count : i%data.channels.Length;
-                var n=data.channels[source];
+                bool repeated=i>=data.channels.Length;
+                var n=selected[i];
                 if(n==null || string.IsNullOrWhiteSpace(n.name) || string.IsNullOrWhiteSpace(n.topic) || n.audience<0 || n.camp<0 || n.camp>2)
                     throw new ArgumentException("PhaseTwoChannels.json: проверьте name, topic, audience и camp у канала №"+(i+1));
                 string topic=n.topic.Trim().TrimStart('#').Trim().ToLowerInvariant();
                 if(topic.Length==0) throw new ArgumentException("Пустая тематика у канала №"+(i+1));
-                graph[i]=new MediaChannel {name=n.name.Trim()+(i>=data.channels.Length ? " · "+(i/data.channels.Length+1) : ""),topic="#"+topic,platform=n.platform ?? "",audience=n.audience,camp=n.camp,canPublish=n.canPublish};
+                var topics=(n.topics ?? new string[0]).Concat(new[]{topic})
+                    .Where(t=>!string.IsNullOrWhiteSpace(t)).Select(t=>"#"+t.Trim().TrimStart('#').Trim().ToLowerInvariant()).Distinct().ToArray();
+                graph[i]=new MediaChannel {name=n.name.Trim()+(repeated ? " · "+(2+(i-data.channels.Length)/repeatCount) : ""),topic="#"+topic,topics=topics,allTopics=n.allTopics,priority=n.priority,platform=n.platform ?? "",audience=n.audience,camp=n.camp,canPublish=n.canPublish};
             }
             AdjustAudiences(graph,tuning.audienceSpread);
             var groups=Enumerable.Range(0,graph.Length).GroupBy(i=>graph[i].topic).Select(g=>g.ToArray()).ToArray();
