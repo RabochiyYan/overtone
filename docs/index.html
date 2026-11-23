@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Окно Овертона</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #111716; color: #e6dfcc; font: 14px Arial, sans-serif; }
+    main { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; gap: 10px; }
+    #stage { position: relative; width: min(100%, calc((100dvh - 64px) * 16 / 9)); aspect-ratio: 16 / 9; background: #18201e; }
+    canvas { width: 100%; height: 100%; display: block; outline: none; }
+    #loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background: #18201e; }
+    #loading[hidden] { display: none; }
+    progress { width: min(70%, 360px); accent-color: #aebda2; }
+    #message { max-width: 580px; padding: 16px; white-space: pre-wrap; text-align: center; }
+    footer { display: flex; align-items: center; justify-content: space-between; width: min(100%, 1000px); gap: 16px; }
+    button { background: transparent; border: 1px solid #6b796e; color: inherit; padding: 8px 12px; cursor: pointer; }
+    button:disabled { opacity: .4; cursor: default; }
+    #stage:fullscreen { width: 100vw; height: 100vh; background: #111716; display: grid; place-items: center; }
+    #stage:fullscreen canvas { width: min(100vw, calc(100vh * 16 / 9)); height: min(100vh, calc(100vw * 9 / 16)); }
+  </style>
+</head>
+<body>
+<main>
+  <div id="stage">
+    <canvas id="unity-canvas" width="1600" height="900" tabindex="0" aria-label="Окно Овертона"></canvas>
+    <div id="loading" role="status"><strong>ОКНО ОВЕРТОНА</strong><progress id="progress" max="1" value="0"></progress><span id="message">Загрузка игры…</span></div>
+  </div>
+  <footer><span>Мышь · A / D или ← / → · Esc — пауза</span><button id="fullscreen" disabled>На весь экран</button></footer>
+</main>
+<script>
+  const canvas = document.getElementById('unity-canvas');
+  const loading = document.getElementById('loading');
+  const message = document.getElementById('message');
+  const fullscreen = document.getElementById('fullscreen');
+  function fail(text) { loading.hidden = false; document.getElementById('progress').hidden = true; message.textContent = text; }
+  const config = {
+    arguments: [],
+    dataUrl: 'Build/2271e51fb3795c55b18d00c70a399b03.data.unityweb',
+    frameworkUrl: 'Build/f8a34ab8e774afd8dcdab01041907cab.framework.js.unityweb',
+    codeUrl: 'Build/f0494491559e629e43e4fd589d239b65.wasm.unityweb',
+    streamingAssetsUrl: 'StreamingAssets',
+    companyName: "DefaultCompany",
+    productName: "Окно Овертона",
+    productVersion: "1.0",
+    devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+    showBanner: (text, type) => { if (type === 'error') fail(text); else console.warn(text); }
+  };
+  const script = document.createElement('script');
+  script.src = 'Build/b19223c5fe4e1a1fd782738079841eaf.loader.js';
+  script.onerror = () => fail('Не удалось загрузить игру. Проверьте соединение и обновите страницу.');
+  script.onload = () => createUnityInstance(canvas, config, value => document.getElementById('progress').value = value)
+    .then(instance => {
+      loading.hidden = true;
+      canvas.focus();
+      fullscreen.disabled = false;
+      fullscreen.onclick = () => {
+        const stage = document.getElementById('stage');
+        if (stage.requestFullscreen) stage.requestFullscreen().catch(error => console.warn(error));
+        else instance.SetFullscreen(1);
+      };
+    })
+    .catch(error => fail('Не удалось запустить игру.\n' + error));
+  if (location.protocol === 'file:') fail('Откройте игру через веб-сервер. Инструкция находится в WEBGL_README.txt.');
+  else document.body.appendChild(script);
+</script>
+</body>
+</html>

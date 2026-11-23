@@ -57,7 +57,27 @@ namespace Overtone.Editor
                 hash.TransformFinalBlock(new byte[0],0,0);
                 string fingerprint=BitConverter.ToString(hash.Hash).Replace("-","").ToLowerInvariant();
                 File.WriteAllText(Path.Combine(output,"source-version.json"),"{\"sourceHash\":\""+fingerprint+"\",\"builtUtc\":\""+DateTime.UtcNow.ToString("o")+"\"}");
+                PrepareGitHubPages(output);
             }
+        }
+
+        // GitHub Pages can publish /docs directly; /Builds stays a local build cache.
+        public static void PrepareGitHubPages(string output)
+        {
+            string source=Path.GetFullPath(output);
+            string destination=Path.GetFullPath("docs");
+            if(!Directory.Exists(source) || !File.Exists(Path.Combine(source,"index.html")))
+                throw new DirectoryNotFoundException("WebGL build must contain index.html: "+source);
+            if(!string.Equals(source,destination,StringComparison.OrdinalIgnoreCase)) {
+                foreach(string file in Directory.GetFiles(source,"*",SearchOption.AllDirectories)) {
+                    string relative=file.Substring(source.Length+1);
+                    string target=Path.Combine(destination,relative);
+                    Directory.CreateDirectory(Path.GetDirectoryName(target));
+                    File.Copy(file,target,true);
+                }
+            }
+            File.WriteAllText(Path.Combine(destination,".nojekyll"),"");
+            Debug.Log("GitHub Pages files ready: "+destination);
         }
 
         public static void Configure()
