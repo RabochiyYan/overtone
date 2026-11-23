@@ -1,0 +1,16 @@
+{
+  "target": "StandaloneOSX",
+  "build_id": "build_fe12e8aac707",
+  "build_success": true,
+  "build_errors": 0,
+  "channels": 54,
+  "communities": 9,
+  "connections": 129,
+  "gateways": 13,
+  "sorting_seconds": 30,
+  "parallel_per_source": true,
+  "artifact": "/Users/sergeiyan/Desktop/окно овертона/overtone/Builds/Overtone.app",
+  "bytes": 96584393,
+  "executable_exists": true,
+  "executable_bytes": 33594
+}

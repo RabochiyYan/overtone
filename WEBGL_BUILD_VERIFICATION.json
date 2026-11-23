@@ -1,0 +1,36 @@
+{
+  "result": "Succeeded",
+  "platform": "WebGL",
+  "totalSizeBytes": 17184346,
+  "buildTimeMs": 396080,
+  "totalErrors": 0,
+  "totalWarnings": 358,
+  "http_checks": [
+    {
+      "path": "index.html",
+      "status": 200,
+      "bytes": 4022
+    },
+    {
+      "path": "Build/WebGL.loader.js",
+      "status": 200,
+      "bytes": 48540
+    },
+    {
+      "path": "Build/WebGL.framework.js.unityweb",
+      "status": 200,
+      "bytes": 85497
+    },
+    {
+      "path": "Build/WebGL.wasm.unityweb",
+      "status": 200,
+      "bytes": 11139837
+    },
+    {
+      "path": "Build/WebGL.data.unityweb",
+      "status": 200,
+      "bytes": 5906450
+    }
+  ],
+  "browser_test": "Not performed: browser automation timed out and became unavailable."
+}
