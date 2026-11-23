@@ -37,9 +37,9 @@
   function fail(text) { loading.hidden = false; document.getElementById('progress').hidden = true; message.textContent = text; }
   const config = {
     arguments: [],
-    dataUrl: 'Build/df8412438e230472d0b58741824336ad.data.unityweb',
+    dataUrl: 'Build/cb5c8a0c80d721359821efbf74bcd3bc.data.unityweb',
     frameworkUrl: 'Build/bbf1bf817998062bd65750221dbde63e.framework.js.unityweb',
-    codeUrl: 'Build/387f346c342e48b0efee108cc0bd0712.wasm.unityweb',
+    codeUrl: 'Build/e1fea0f96dccb0bab5d7f91e572c9aeb.wasm.unityweb',
     streamingAssetsUrl: 'StreamingAssets',
     companyName: "DefaultCompany",
     productName: "Окно Овертона",
@@ -48,7 +48,7 @@
     showBanner: (text, type) => { if (type === 'error') fail(text); else console.warn(text); }
   };
   const script = document.createElement('script');
-  script.src = 'Build/a7667da2952762f566e41e9c60defd7e.loader.js';
+  script.src = 'Build/9b0887fe741ccfb97d2e33964cb357f9.loader.js';
   script.onerror = () => fail('Не удалось загрузить игру. Проверьте соединение и обновите страницу.');
   script.onload = () => createUnityInstance(canvas, config, value => document.getElementById('progress').value = value)
     .then(instance => {
