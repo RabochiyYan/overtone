@@ -4,117 +4,205 @@ using System.Linq;
 using UnityEngine;
 namespace Overtone
 {
+    [Serializable]
+    public sealed class MediaChannelList
+    {
+        public MediaChannel[] channels;
+    }
+
     public sealed class MediaCommunity
     {
         public string name,label;
-        public Vector2 center;
+        public Color color;
     }
-    /// <summary>Dense topic communities joined by a few single-edge gateways.</summary>
+
+    /// <summary>Random topic-biased graph and force-directed layout from PhaseTwoChannels.json.</summary>
     public static class MediaNetwork
     {
-        public static readonly MediaCommunity[] Communities = {
-            new MediaCommunity {name="Официальная повестка",label="ВЛАСТЬ",center=new Vector2(140f,140f)},
-            new MediaCommunity {name="Оппозиционная среда",label="ОППОЗИЦИЯ",center=new Vector2(860f,140f)},
-            new MediaCommunity {name="Нейтральная лента",label="НЕЙТРАЛЫ",center=new Vector2(535f,215f)},
-            new MediaCommunity {name="Наука и технологии",label="НАУКА /\nТЕХНО",center=new Vector2(385f,120f)},
-            new MediaCommunity {name="Здоровье и психология",label="ЗДОРОВЬЕ",center=new Vector2(825f,345f)},
-            new MediaCommunity {name="Дом и природа",label="ДОМ /\nПРИРОДА",center=new Vector2(145f,345f)},
-            new MediaCommunity {name="Экономика и работа",label="ЭКОНОМИКА",center=new Vector2(280f,245f)},
-            new MediaCommunity {name="Культура и развлечения",label="КУЛЬТУРА",center=new Vector2(705f,235f)},
-            new MediaCommunity {name="Образование и общество",label="УЧЁБА /\nОБЩЕСТВО",center=new Vector2(485f,355f)}
-        };
-        static readonly Vector2[] positions = {
-            new Vector2(204.6f,146.2f),
-            new Vector2(177.9f,195.2f),
-            new Vector2(116.5f,209.2f),
-            new Vector2(75.8f,153.9f),
-            new Vector2(108.7f,72.1f),
-            new Vector2(175.1f,71.7f),
-            new Vector2(925.8f,149.9f),
-            new Vector2(905.3f,200.5f),
-            new Vector2(817.7f,201.5f),
-            new Vector2(794.6f,150.9f),
-            new Vector2(822.3f,81.1f),
-            new Vector2(901.7f,81.0f),
-            new Vector2(603.0f,196.4f),
-            new Vector2(567.5f,280.9f),
-            new Vector2(486.3f,262.2f),
-            new Vector2(464.2f,201.3f),
-            new Vector2(501.4f,158.2f),
-            new Vector2(560.9f,155.4f),
-            new Vector2(449.1f,120.4f),
-            new Vector2(415.5f,175.2f),
-            new Vector2(354.6f,167.6f),
-            new Vector2(310.6f,109.1f),
-            new Vector2(357.6f,66.1f),
-            new Vector2(420.5f,65.2f),
-            new Vector2(900.9f,348.5f),
-            new Vector2(864.1f,405.5f),
-            new Vector2(781.6f,403.0f),
-            new Vector2(760.6f,344.0f),
-            new Vector2(787.6f,290.1f),
-            new Vector2(857.1f,281.4f),
-            new Vector2(216.6f,342.8f),
-            new Vector2(191.5f,404.2f),
-            new Vector2(103.2f,399.6f),
-            new Vector2(75.3f,350.1f),
-            new Vector2(96.8f,285.3f),
-            new Vector2(168.8f,283.8f),
-            new Vector2(352.2f,246.8f),
-            new Vector2(317.7f,297.2f),
-            new Vector2(261.3f,311.5f),
-            new Vector2(215.0f,243.0f),
-            new Vector2(242.6f,188.7f),
-            new Vector2(303.0f,192.6f),
-            new Vector2(773.4f,231.3f),
-            new Vector2(727.7f,292.1f),
-            new Vector2(657.6f,296.1f),
-            new Vector2(640.3f,238.9f),
-            new Vector2(672.6f,176.1f),
-            new Vector2(748.4f,181.9f),
-            new Vector2(555.7f,347.6f),
-            new Vector2(508.5f,413.7f),
-            new Vector2(444.0f,414.9f),
-            new Vector2(409.0f,346.9f),
-            new Vector2(441.7f,301.1f),
-            new Vector2(518.2f,306.6f)
-        };
-        static readonly string[] names = {"Вестник N","Первый N","Региональный эфир","Новости округа","Столичный обзор","Общий эфир","Другой взгляд","Без купюр","Независимый кадр","Улица онлайн","Факт и мнение","Свободный микрофон","Лента дня","Пульс города","Городской дневник","Ежедневник","Новости без оценок","Общая лента","Научный отдел","Лаборатория","Техноразбор","Понятная наука","Цифровой вестник","Исследование","Здоровый смысл","Просто о жизни","Баланс","Доктор рядом","Психология дня","Пульс здоровья","Дом и сад","Мир рядом","Природный мир","Зелёный двор","Живая планета","Уютный дом","Деловая сводка","Экономика N","Разбор недели","Рынки и планы","Кошелёк","Рабочая среда","Культурный шум","Большой экран","После работы","Новый ракурс","Сцена и время","Афиша N","Классный час","Открытый город","Город говорит","Голос двора","Кампус","Учимся вместе"};
-        static readonly string[] topics = {"#общество","#общество","#экономика","#образование","#технологии","#культура","#общество","#экономика","#общество","#психология","#наука","#культура","#общество","#общество","#образование","#здоровье","#технологии","#природа","#наука","#технологии","#технологии","#наука","#технологии","#наука","#здоровье","#психология","#психология","#здоровье","#психология","#здоровье","#дом","#природа","#природа","#дом","#природа","#дом","#экономика","#экономика","#экономика","#экономика","#экономика","#экономика","#культура","#шоубизнес","#культура","#культура","#культура","#шоубизнес","#образование","#общество","#общество","#образование","#образование","#образование"};
-        static readonly int[] audiences = {1800,14500,8200,3400,17800,12000,2100,9000,4500,3200,11200,5800,2600,6300,3700,5600,8500,10400,2200,6100,7600,4800,13000,9200,2400,7800,5500,14000,6800,11500,2300,9400,10400,6600,12500,8600,2500,9500,8600,17000,7200,11000,2700,22000,12500,15600,7400,10500,2000,13800,4200,5400,9600,6500};
-        static readonly int[,] gateways = {{0,40},{0,21},{8,42},{7,29},{15,19},{14,36},{12,45},{13,53},{20,41},{28,43},{30,38},{30,51},{44,48}};
-        public static float Radius(int audience) { return 18+Mathf.Sqrt(audience/22000f)*8; }
-        public static MediaChannel[] Create()
+        public static MediaCommunity[] Communities { get; private set; } = new MediaCommunity[0];
+        public static float Height { get; private set; } = 480;
+        public static float Width { get; private set; } = 948;
+        public static float Radius(int audience) { return Mathf.Lerp(12,21,Mathf.Clamp01(audience/22000f)); }
+
+        public static MediaChannelList LoadCatalog()
         {
-            int count=positions.Length;var graph=new MediaChannel[count];var links=new HashSet<int>[count];
-            string[] platforms={"Telegram","ВК","Блогер","Telegram","ТВ","ВК"};
-            for(int i=0;i<count;i++) {
-                int group=i/6,local=i%6;links[i]=new HashSet<int>();
-                graph[i]=new MediaChannel {name=names[i],topic=topics[i],platform=platforms[local],audience=audiences[i],camp=group<3 ? group : (group+local)%3,cluster=group,clusterName=Communities[group].name,canPublish=local==0,x=positions[i].x,y=positions[i].y};
+            var asset=Resources.Load<TextAsset>("PhaseTwoChannels");
+            if(asset==null) throw new InvalidOperationException("Не найден Resources/PhaseTwoChannels.json.");
+            return JsonUtility.FromJson<MediaChannelList>(asset.text);
+        }
+        public static MediaChannel[] Create() { return Create(LoadCatalog()); }
+        public static MediaChannel[] Create(MediaChannelList data) { return Create(data,Guid.NewGuid().GetHashCode()); }
+        public static MediaChannel[] Create(MediaChannelList data,int seed) { return Create(data,seed,new PhaseTwoTuning()); }
+
+        public static MediaChannel[] Create(MediaChannelList data,int seed,PhaseTwoTuning tuning)
+        {
+            if(data==null || data.channels==null)
+                throw new ArgumentException("PhaseTwoChannels.json: нужен массив channels (можно пустой).");
+            tuning=(tuning ?? new PhaseTwoTuning()).Copy();tuning.Clamp(data.channels.Length);
+            int count=data.channels.Length==0 ? 0 : tuning.Count(data.channels.Length);
+            var graph=new MediaChannel[count];
+            for(int i=0;i<graph.Length;i++) {
+                int source=count<data.channels.Length ? i*data.channels.Length/count : i%data.channels.Length;
+                var n=data.channels[source];
+                if(n==null || string.IsNullOrWhiteSpace(n.name) || string.IsNullOrWhiteSpace(n.topic) || n.audience<0 || n.camp<0 || n.camp>2)
+                    throw new ArgumentException("PhaseTwoChannels.json: проверьте name, topic, audience и camp у канала №"+(i+1));
+                string topic=n.topic.Trim().TrimStart('#').Trim().ToLowerInvariant();
+                if(topic.Length==0) throw new ArgumentException("Пустая тематика у канала №"+(i+1));
+                graph[i]=new MediaChannel {name=n.name.Trim()+(i>=data.channels.Length ? " · "+(i/data.channels.Length+1) : ""),topic="#"+topic,platform=n.platform ?? "",audience=n.audience,camp=n.camp,canPublish=n.canPublish};
             }
-            Action<int,int> add=(a,b)=>{links[a].Add(b);links[b].Add(a);};
-            // Local triangles and chords keep each six-channel community cohesive.
-            for(int i=0;i<count;i++) {
-                var candidates=Enumerable.Range(i/6*6,6).Where(j=>j!=i).OrderBy(j=>Vector2.Distance(positions[i],positions[j]));
-                foreach(int j in candidates) {
-                    if(links[i].Count>=4)break;
-                    if(Clear(i,j))add(i,j);
+            AdjustAudiences(graph,tuning.audienceSpread);
+            var groups=Enumerable.Range(0,graph.Length).GroupBy(i=>graph[i].topic).Select(g=>g.ToArray()).ToArray();
+            Communities=groups.Select((g,index)=>new MediaCommunity {name=graph[g[0]].topic.Substring(1),label=graph[g[0]].topic,color=Color.HSVToRGB((.04f+index*.618034f)%1,.57f,.94f)}).ToArray();
+            for(int group=0;group<groups.Length;group++) {
+                var members=groups[group];
+                if(!members.Any(i=>graph[i].canPublish)) graph[members[0]].canPublish=true;
+                foreach(int i in members) {graph[i].cluster=group;graph[i].clusterName=Communities[group].name;}
+            }
+            var random=new System.Random(seed);
+            var links=Enumerable.Range(0,graph.Length).Select(i=>new HashSet<int>()).ToArray();
+            var components=Enumerable.Range(0,graph.Length).ToArray();
+            Func<int,int> root=null;
+            root=i=>components[i]==i ? i : components[i]=root(components[i]);
+            Action<int,int> add=(a,b)=>{if(a==b)return;links[a].Add(b);links[b].Add(a);components[root(a)]=root(b);};
+            // Normalize camp preference per node, so grouping does not simply multiply density.
+            var campWeights=new double[graph.Length];
+            for(int i=0;i<graph.Length;i++) {
+                double baseline=0,weighted=0;
+                for(int j=0;j<graph.Length;j++) if(i!=j) {
+                    double p=LinkProbability(i,j,graph,groups,tuning);
+                    baseline+=p;weighted+=p*CampWeight(graph[i],graph[j],tuning.campGrouping);
+                }
+                campWeights[i]=weighted>0 ? baseline/weighted : 1;
+            }
+            if(Mathf.Approximately(tuning.meanLinks,3.55f)) {
+                // Similar topics strongly increase the probability, without prescribing blocks or gateways.
+                for(int i=0;i<graph.Length;i++) for(int j=i+1;j<graph.Length;j++) {
+                    double probability=LinkProbability(i,j,graph,groups,tuning);
+                    probability*=CampWeight(graph[i],graph[j],tuning.campGrouping)*Math.Sqrt(campWeights[i]*campWeights[j]);
+                    if(random.NextDouble()<probability) add(i,j);
+                }
+                // Repair isolated components with randomly weighted joins; never depend on file indices.
+                var candidates=new List<Tuple<double,int,int>>();
+                for(int i=0;i<graph.Length;i++) for(int j=i+1;j<graph.Length;j++) {
+                    if(root(i)==root(j))continue;
+                    double topicWeight=tuning.topicMix<=.1f ? 20+180*(1-tuning.topicMix/.1f) : 1+19*(1-tuning.topicMix)/.9f;
+                    double weight=(graph[i].cluster==graph[j].cluster ? topicWeight : 1)*CampWeight(graph[i],graph[j],tuning.campGrouping);
+                    candidates.Add(Tuple.Create(-Math.Log(Math.Max(.0000001,random.NextDouble()))/weight,i,j));
+                }
+                foreach(var edge in candidates.OrderBy(e=>e.Item1)) if(root(edge.Item2)!=root(edge.Item3)) add(edge.Item2,edge.Item3);
+            } else {
+                // Weighted sampling without replacement makes the requested average meaningful
+                // even when small topic groups run out of possible internal edges.
+                var ranked=new List<Tuple<double,int,int>>();
+                for(int i=0;i<graph.Length;i++) for(int j=i+1;j<graph.Length;j++) {
+                    double weight=LinkProbability(i,j,graph,groups,tuning)*CampWeight(graph[i],graph[j],tuning.campGrouping)*Math.Sqrt(campWeights[i]*campWeights[j]);
+                    ranked.Add(Tuple.Create(-Math.Log(Math.Max(.0000001,random.NextDouble()))/Math.Max(.00000001,weight),i,j));
+                }
+                var ordered=ranked.OrderBy(e=>e.Item1).ToArray();
+                int edges=0;
+                foreach(var edge in ordered) if(root(edge.Item2)!=root(edge.Item3)) {add(edge.Item2,edge.Item3);edges++;}
+                int target=Math.Min(graph.Length*(graph.Length-1)/2,Math.Max(graph.Length-1,Mathf.RoundToInt(tuning.meanLinks*graph.Length/2)));
+                foreach(var edge in ordered) {
+                    if(edges>=target)break;
+                    if(links[edge.Item2].Contains(edge.Item3))continue;
+                    add(edge.Item2,edge.Item3);edges++;
                 }
             }
-            // One gateway per community pair. No distance-based global links bypass these cuts.
-            for(int p=0;p<gateways.GetLength(0);p++)add(gateways[p,0],gateways[p,1]);
-            for(int i=0;i<count;i++)graph[i].neighbors=links[i].OrderBy(j=>j).ToArray();
+            for(int i=0;i<graph.Length;i++) graph[i].neighbors=links[i].OrderBy(j=>j).ToArray();
+            Layout(graph,random);
             return graph;
         }
-        static bool Clear(int a,int b)
+
+        static double CampWeight(MediaChannel a,MediaChannel b,float grouping)
         {
-            var delta=positions[b]-positions[a];
-            for(int k=0;k<positions.Length;k++) {
-                if(k==a||k==b)continue;
-                float t=Mathf.Clamp01(Vector2.Dot(positions[k]-positions[a],delta)/delta.sqrMagnitude);
-                if(Vector2.Distance(positions[k],positions[a]+delta*t)<Radius(audiences[k])+3)return false;
+            return a.camp==b.camp ? 1+grouping*9 : 1-grouping*.98;
+        }
+        static double LinkProbability(int i,int j,MediaChannel[] graph,int[][] groups,PhaseTwoTuning tuning)
+        {
+            bool same=graph[i].cluster==graph[j].cluster;
+            int peers=same ? groups[graph[i].cluster].Length-1 : graph.Length-groups[graph[i].cluster].Length;
+            double original=same ? Math.Min(.8,3.2/Math.Max(1,peers)) : .35/Math.Max(1,peers);
+            if(tuning.topicMix==.1f && tuning.meanLinks==3.55f)return original;
+            double probability;
+            if(tuning.topicMix<=.1f) probability=original*(same ? 1+(.1-tuning.topicMix)/.1*.35/3.2 : tuning.topicMix/.1);
+            else probability=original+(3.55/Math.Max(1,graph.Length-1)-original)*(tuning.topicMix-.1)/.9;
+            return probability*tuning.meanLinks/3.55;
+        }
+        static void AdjustAudiences(MediaChannel[] graph,float spread)
+        {
+            if(graph.Length==0 || Mathf.Approximately(spread,1))return;
+            double total=graph.Sum(n=>(double)n.audience);
+            if(total<=0)return;
+            double mean=total/graph.Length;
+            var weights=graph.Select(n=>Math.Pow(n.audience/mean,spread)).ToArray();
+            double sum=weights.Sum();long allocated=0;
+            var fractions=new double[graph.Length];
+            for(int i=0;i<graph.Length;i++) {
+                double value=weights[i]/sum*total;
+                graph[i].audience=(int)Math.Floor(value);allocated+=graph[i].audience;
+                fractions[i]=value-graph[i].audience;
             }
-            return true;
+            int remaining=(int)(total-allocated);
+            foreach(int i in Enumerable.Range(0,graph.Length).OrderByDescending(i=>fractions[i]).Take(remaining)) graph[i].audience++;
+        }
+
+        static void Layout(MediaChannel[] graph,System.Random random)
+        {
+            int count=graph.Length;
+            Width=Mathf.Max(948,Mathf.Sqrt(count*8400f*948/480));
+            Height=Mathf.Max(480,Width*480/948);
+            var positions=new Vector2[count];var forces=new Vector2[count];
+            var center=new Vector2(Width/2,Height/2);
+            for(int i=0;i<count;i++) {
+                float angle=(float)random.NextDouble()*Mathf.PI*2;
+                float radius=Mathf.Sqrt((float)random.NextDouble())*.42f;
+                positions[i]=center+new Vector2(Mathf.Cos(angle)*Width,Mathf.Sin(angle)*Height)*radius;
+            }
+            // Force-directed layout: edges attract, all nodes repel. No topic centers or fixed cells.
+            const int iterations=480;
+            for(int step=0;step<iterations;step++) {
+                for(int i=0;i<count;i++) forces[i]=(center-positions[i])*.025f;
+                for(int i=0;i<count;i++) for(int j=i+1;j<count;j++) {
+                    var delta=positions[i]-positions[j];float distance=Mathf.Max(.1f,delta.magnitude);
+                    var direction=distance>.11f ? delta/distance : Vector2.right;
+                    float clearance=Radius(graph[i].audience)+Radius(graph[j].audience)+34;
+                    float push=360/distance+Mathf.Max(0,clearance-distance)*1.2f;
+                    var force=direction*push;forces[i]+=force;forces[j]-=force;
+                }
+                for(int i=0;i<count;i++) foreach(int j in graph[i].neighbors) {
+                    if(j<=i)continue;
+                    var delta=positions[j]-positions[i];float distance=Mathf.Max(.1f,delta.magnitude);
+                    var force=delta/distance*(distance-46)*.24f;
+                    forces[i]+=force;forces[j]-=force;
+                }
+                float temperature=12*(1-step/(float)iterations)+.15f;
+                for(int i=0;i<count;i++) {
+                    positions[i]+=Vector2.ClampMagnitude(forces[i],temperature);
+                }
+            }
+            if(count==0)return;
+            float minX=positions.Min(p=>p.x),minY=positions.Min(p=>p.y);
+            float spanX=positions.Max(p=>p.x)-minX,spanY=positions.Max(p=>p.y)-minY;
+            var scale=new Vector2((Width-100)/Mathf.Max(1,spanX),(Height-110)/Mathf.Max(1,spanY));
+            for(int i=0;i<count;i++) positions[i]=Vector2.Scale(positions[i]-new Vector2(minX,minY),scale);
+            // Resolve remaining badge collisions after relaxation, without moving nodes into a grid.
+            for(int step=0;step<Mathf.Clamp(count*2,120,1000);step++) {
+                float penetration=0;
+                for(int i=0;i<count;i++) for(int j=i+1;j<count;j++) {
+                var delta=positions[j]-positions[i];float distance=delta.magnitude;
+                float clearance=Radius(graph[i].audience)+Radius(graph[j].audience)+34;
+                if(distance>=clearance)continue;
+                penetration=Mathf.Max(penetration,clearance-distance);
+                var shift=(distance>.001f ? delta/distance : Vector2.right)*(clearance-distance)*.51f;
+                positions[i]-=shift;positions[j]+=shift;
+                }
+                if(penetration<.05f)break;
+            }
+            minX=positions.Min(p=>p.x);minY=positions.Min(p=>p.y);
+            spanX=positions.Max(p=>p.x)-minX;spanY=positions.Max(p=>p.y)-minY;
+            Width=Mathf.Max(Width,spanX+84);Height=Mathf.Max(Height,spanY+96);
+            var offset=new Vector2((Width-spanX)/2-minX,(Height-spanY)/2-minY);
+            for(int i=0;i<count;i++) {graph[i].x=positions[i].x+offset.x;graph[i].y=positions[i].y+offset.y;}
         }
     }
 }

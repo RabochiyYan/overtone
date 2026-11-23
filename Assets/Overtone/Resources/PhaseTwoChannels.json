@@ -1,0 +1,436 @@
+{
+  "channels": [
+    {
+      "name": "Вестник N",
+      "topic": "#общество",
+      "platform": "Telegram",
+      "camp": 0,
+      "audience": 1800,
+      "canPublish": true
+    },
+    {
+      "name": "Первый N",
+      "topic": "#общество",
+      "platform": "ВК",
+      "camp": 0,
+      "audience": 14500,
+      "canPublish": false
+    },
+    {
+      "name": "Региональный эфир",
+      "topic": "#экономика",
+      "platform": "Блогер",
+      "camp": 0,
+      "audience": 8200,
+      "canPublish": false
+    },
+    {
+      "name": "Новости округа",
+      "topic": "#образование",
+      "platform": "Telegram",
+      "camp": 0,
+      "audience": 3400,
+      "canPublish": false
+    },
+    {
+      "name": "Столичный обзор",
+      "topic": "#технологии",
+      "platform": "ТВ",
+      "camp": 0,
+      "audience": 17800,
+      "canPublish": false
+    },
+    {
+      "name": "Общий эфир",
+      "topic": "#культура",
+      "platform": "ВК",
+      "camp": 0,
+      "audience": 12000,
+      "canPublish": false
+    },
+    {
+      "name": "Другой взгляд",
+      "topic": "#общество",
+      "platform": "Telegram",
+      "camp": 1,
+      "audience": 2100,
+      "canPublish": true
+    },
+    {
+      "name": "Без купюр",
+      "topic": "#экономика",
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 9000,
+      "canPublish": false
+    },
+    {
+      "name": "Независимый кадр",
+      "topic": "#общество",
+      "platform": "Блогер",
+      "camp": 1,
+      "audience": 4500,
+      "canPublish": false
+    },
+    {
+      "name": "Улица онлайн",
+      "topic": "#психология",
+      "platform": "Telegram",
+      "camp": 1,
+      "audience": 3200,
+      "canPublish": false
+    },
+    {
+      "name": "Факт и мнение",
+      "topic": "#наука",
+      "platform": "ТВ",
+      "camp": 1,
+      "audience": 11200,
+      "canPublish": false
+    },
+    {
+      "name": "Свободный микрофон",
+      "topic": "#культура",
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 5800,
+      "canPublish": false
+    },
+    {
+      "name": "Лента дня",
+      "topic": "#общество",
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2600,
+      "canPublish": true
+    },
+    {
+      "name": "Пульс города",
+      "topic": "#общество",
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 6300,
+      "canPublish": false
+    },
+    {
+      "name": "Городской дневник",
+      "topic": "#образование",
+      "platform": "Блогер",
+      "camp": 2,
+      "audience": 3700,
+      "canPublish": false
+    },
+    {
+      "name": "Ежедневник",
+      "topic": "#здоровье",
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 5600,
+      "canPublish": false
+    },
+    {
+      "name": "Новости без оценок",
+      "topic": "#технологии",
+      "platform": "ТВ",
+      "camp": 2,
+      "audience": 8500,
+      "canPublish": false
+    },
+    {
+      "name": "Общая лента",
+      "topic": "#природа",
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 10400,
+      "canPublish": false
+    },
+    {
+      "name": "Научный отдел",
+      "topic": "#наука",
+      "platform": "Telegram",
+      "camp": 0,
+      "audience": 2200,
+      "canPublish": true
+    },
+    {
+      "name": "Лаборатория",
+      "topic": "#технологии",
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 6100,
+      "canPublish": false
+    },
+    {
+      "name": "Техноразбор",
+      "topic": "#технологии",
+      "platform": "Блогер",
+      "camp": 2,
+      "audience": 7600,
+      "canPublish": false
+    },
+    {
+      "name": "Понятная наука",
+      "topic": "#наука",
+      "platform": "Telegram",
+      "camp": 0,
+      "audience": 4800,
+      "canPublish": false
+    },
+    {
+      "name": "Цифровой вестник",
+      "topic": "#технологии",
+      "platform": "ТВ",
+      "camp": 1,
+      "audience": 13000,
+      "canPublish": false
+    },
+    {
+      "name": "Исследование",
+      "topic": "#наука",
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 9200,
+      "canPublish": false
+    },
+    {
+      "name": "Здоровый смысл",
+      "topic": "#здоровье",
+      "platform": "Telegram",
+      "camp": 1,
+      "audience": 2400,
+      "canPublish": true
+    },
+    {
+      "name": "Просто о жизни",
+      "topic": "#психология",
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 7800,
+      "canPublish": false
+    },
+    {
+      "name": "Баланс",
+      "topic": "#психология",
+      "platform": "Блогер",
+      "camp": 0,
+      "audience": 5500,
+      "canPublish": false
+    },
+    {
+      "name": "Доктор рядом",
+      "topic": "#здоровье",
+      "platform": "Telegram",
+      "camp": 1,
+      "audience": 14000,
+      "canPublish": false
+    },
+    {
+      "name": "Психология дня",
+      "topic": "#психология",
+      "platform": "ТВ",
+      "camp": 2,
+      "audience": 6800,
+      "canPublish": false
+    },
+    {
+      "name": "Пульс здоровья",
+      "topic": "#здоровье",
+      "platform": "ВК",
+      "camp": 0,
+      "audience": 11500,
+      "canPublish": false
+    },
+    {
+      "name": "Дом и сад",
+      "topic": "#дом",
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2300,
+      "canPublish": true
+    },
+    {
+      "name": "Мир рядом",
+      "topic": "#природа",
+      "platform": "ВК",
+      "camp": 0,
+      "audience": 9400,
+      "canPublish": false
+    },
+    {
+      "name": "Природный мир",
+      "topic": "#природа",
+      "platform": "Блогер",
+      "camp": 1,
+      "audience": 10400,
+      "canPublish": false
+    },
+    {
+      "name": "Зелёный двор",
+      "topic": "#дом",
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 6600,
+      "canPublish": false
+    },
+    {
+      "name": "Живая планета",
+      "topic": "#природа",
+      "platform": "ТВ",
+      "camp": 0,
+      "audience": 12500,
+      "canPublish": false
+    },
+    {
+      "name": "Уютный дом",
+      "topic": "#дом",
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 8600,
+      "canPublish": false
+    },
+    {
+      "name": "Деловая сводка",
+      "topic": "#экономика",
+      "platform": "Telegram",
+      "camp": 0,
+      "audience": 2500,
+      "canPublish": true
+    },
+    {
+      "name": "Экономика N",
+      "topic": "#экономика",
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 9500,
+      "canPublish": false
+    },
+    {
+      "name": "Разбор недели",
+      "topic": "#экономика",
+      "platform": "Блогер",
+      "camp": 2,
+      "audience": 8600,
+      "canPublish": false
+    },
+    {
+      "name": "Рынки и планы",
+      "topic": "#экономика",
+      "platform": "Telegram",
+      "camp": 0,
+      "audience": 17000,
+      "canPublish": false
+    },
+    {
+      "name": "Кошелёк",
+      "topic": "#экономика",
+      "platform": "ТВ",
+      "camp": 1,
+      "audience": 7200,
+      "canPublish": false
+    },
+    {
+      "name": "Рабочая среда",
+      "topic": "#экономика",
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 11000,
+      "canPublish": false
+    },
+    {
+      "name": "Культурный шум",
+      "topic": "#культура",
+      "platform": "Telegram",
+      "camp": 1,
+      "audience": 2700,
+      "canPublish": true
+    },
+    {
+      "name": "Большой экран",
+      "topic": "#шоубизнес",
+      "platform": "ВК",
+      "camp": 2,
+      "audience": 22000,
+      "canPublish": false
+    },
+    {
+      "name": "После работы",
+      "topic": "#культура",
+      "platform": "Блогер",
+      "camp": 0,
+      "audience": 12500,
+      "canPublish": false
+    },
+    {
+      "name": "Новый ракурс",
+      "topic": "#культура",
+      "platform": "Telegram",
+      "camp": 1,
+      "audience": 15600,
+      "canPublish": false
+    },
+    {
+      "name": "Сцена и время",
+      "topic": "#культура",
+      "platform": "ТВ",
+      "camp": 2,
+      "audience": 7400,
+      "canPublish": false
+    },
+    {
+      "name": "Афиша N",
+      "topic": "#шоубизнес",
+      "platform": "ВК",
+      "camp": 0,
+      "audience": 10500,
+      "canPublish": false
+    },
+    {
+      "name": "Классный час",
+      "topic": "#образование",
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 2000,
+      "canPublish": true
+    },
+    {
+      "name": "Открытый город",
+      "topic": "#общество",
+      "platform": "ВК",
+      "camp": 0,
+      "audience": 13800,
+      "canPublish": false
+    },
+    {
+      "name": "Город говорит",
+      "topic": "#общество",
+      "platform": "Блогер",
+      "camp": 1,
+      "audience": 4200,
+      "canPublish": false
+    },
+    {
+      "name": "Голос двора",
+      "topic": "#образование",
+      "platform": "Telegram",
+      "camp": 2,
+      "audience": 5400,
+      "canPublish": false
+    },
+    {
+      "name": "Кампус",
+      "topic": "#образование",
+      "platform": "ТВ",
+      "camp": 0,
+      "audience": 9600,
+      "canPublish": false
+    },
+    {
+      "name": "Учимся вместе",
+      "topic": "#образование",
+      "platform": "ВК",
+      "camp": 1,
+      "audience": 6500,
+      "canPublish": false
+    }
+  ]
+}

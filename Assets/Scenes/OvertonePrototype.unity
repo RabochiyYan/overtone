@@ -385,7 +385,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4290035119
   m_fontColor: {r: 0.6862745, g: 0.7411765, b: 0.7058824, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -398,7 +398,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -522,7 +522,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4291945966
   m_fontColor: {r: 0.93333334, g: 0.8980392, b: 0.81960785, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -535,7 +535,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -623,7 +623,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16bab4d16b15549668c0edc3e78e73f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Overtone.GameView
-  font: {fileID: 11400000, guid: 5255af0e7aea74fc697203217eb9e775, type: 2}
+  font: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   stage: {fileID: 1450165446}
   session: {fileID: 249256850}
   content: {fileID: 1761211505}
@@ -736,7 +736,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4281742370
   m_fontColor: {r: 0.13333334, g: 0.20392157, b: 0.21176471, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -749,7 +749,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -887,7 +887,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4290035119
   m_fontColor: {r: 0.6862745, g: 0.7411765, b: 0.7058824, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -900,7 +900,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -1230,7 +1230,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4281742370
   m_fontColor: {r: 0.13333334, g: 0.20392157, b: 0.21176471, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1243,7 +1243,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -1456,7 +1456,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4291945966
   m_fontColor: {r: 0.93333334, g: 0.8980392, b: 0.81960785, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1469,7 +1469,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -1593,7 +1593,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4281742370
   m_fontColor: {r: 0.13333334, g: 0.20392157, b: 0.21176471, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1606,7 +1606,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -2605,7 +2605,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4291945966
   m_fontColor: {r: 0.93333334, g: 0.8980392, b: 0.81960785, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -2618,7 +2618,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -2742,7 +2742,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4281742370
   m_fontColor: {r: 0.13333334, g: 0.20392157, b: 0.21176471, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -2755,7 +2755,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -2879,7 +2879,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4290035119
   m_fontColor: {r: 0.6862745, g: 0.7411765, b: 0.7058824, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -2892,7 +2892,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -3197,7 +3197,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4281744781
   m_fontColor: {r: 0.5529412, g: 0.23921569, b: 0.21176471, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -3210,7 +3210,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -3334,7 +3334,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4285182936
   m_fontColor: {r: 0.84705883, g: 0.7019608, b: 0.41568628, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -3347,7 +3347,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -3662,7 +3662,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4290035119
   m_fontColor: {r: 0.6862745, g: 0.7411765, b: 0.7058824, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -3675,7 +3675,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2

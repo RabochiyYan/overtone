@@ -15,7 +15,8 @@ namespace Overtone
         [SerializeField] public RectTransform stage;
         [SerializeField] public GameSession session;
         [SerializeField] RectTransform content;
-        RectTransform modal, card;
+        RectTransform modal, card, networkSettingsModal;
+        PhaseTwoTuning tuningDraft;
         float shownViews;
         sealed class TransmissionVisual { public RectTransform dot,halo; public Vector2 from,to; }
         readonly List<TransmissionVisual> transmissions = new List<TransmissionVisual>();
@@ -23,6 +24,9 @@ namespace Overtone
         RectTransform timerFill;
         TextMeshProUGUI channelDetails;
         int inspectedChannel=-1;
+        Vector2 networkScrollPosition;
+        float networkZoom;
+        ScrollRect networkScroll;
         AudioSource audioSource;
         AudioClip tone, errorTone;
         bool muted;
@@ -62,7 +66,7 @@ namespace Overtone
                 if(timerFill!=null)timerFill.sizeDelta=new Vector2(240*Mathf.Clamp01(session.SortingTimeLeft/Mathf.Max(1,session.settings.sortingSeconds)),4);
             }
             var k=Keyboard.current; if(k==null) return;
-            if(k.escapeKey.wasPressedThisFrame) session.TogglePause();
+            if(k.escapeKey.wasPressedThisFrame) { if(networkSettingsModal!=null) CloseNetworkSettings(); else session.TogglePause(); }
             if(session.Phase==GamePhase.Sorting && !session.Paused) {
                 if(k.leftArrowKey.wasPressedThisFrame || k.aKey.wasPressedThisFrame) session.Sort(false);
                 if(k.rightArrowKey.wasPressedThisFrame || k.dKey.wasPressedThisFrame) session.Sort(true);
@@ -130,6 +134,9 @@ namespace Overtone
         }
         public void Render()
         {
+            CloseNetworkSettings();
+            if(networkScroll!=null) networkScrollPosition=networkScroll.content.anchoredPosition;
+            networkScroll=null;
             Clear(ref content); Clear(ref modal); card=null; transmissions.Clear(); channelDetails=null; timerLabel=null; timerFill=null;
             content=Rect("Screen",stage,0,0,1600,900);
             Box("Backdrop",content,0,0,1600,900,Palette.Background);
@@ -230,10 +237,9 @@ namespace Overtone
             Button("BeginPhaseTwo",content,"ПЕРЕЙТИ В ОТДЕЛ РАСПРОСТРАНЕНИЯ  →",350,742,900,66,session.BeginPhaseTwo,true,true);
         }
         // Layout belongs to the network data; rendering and transmission use the same coordinates.
-        // Expand only the displayed map; channel data and spread rules stay in their original coordinates.
-        static Vector2 MapPosition(Vector2 point) { return new Vector2(point.x,40+(point.y-40)*1.29f); }
+        static Vector2 MapPosition(Vector2 point) { return point; }
         Vector2 Position(int index) { var n=session.Network[index]; return MapPosition(new Vector2(n.x,n.y)); }
-        float Radius(int index) { return Mathf.Lerp(14,34,session.Network[index].audience/22000f); }
+        float Radius(int index) { return MediaNetwork.Radius(session.Network[index].audience); }
         RectTransform Circle(string name,Transform parent,Vector2 center,float radius,Color color,float ring=0,bool hit=false)
         {
             var rt=Rect(name,parent,center.x,center.y,radius*2,radius*2);
@@ -241,6 +247,84 @@ namespace Overtone
             var graphic=rt.gameObject.AddComponent<CircleGraphic>();
             graphic.ringWidth=ring; graphic.color=color; graphic.raycastTarget=hit; graphic.SetVerticesDirty();
             return rt;
+        }
+        public void ResetNetworkView()
+        {
+            networkZoom=0;networkScrollPosition=Vector2.zero;networkScroll=null;inspectedChannel=-1;
+        }
+        public void OpenNetworkSettings()
+        {
+            if(session.Phase!=GamePhase.Editing || session.Paused)return;
+            tuningDraft=session.Tuning.Copy();DrawNetworkSettings();
+        }
+        void CloseNetworkSettings() { Clear(ref networkSettingsModal);tuningDraft=null; }
+        void DrawNetworkSettings()
+        {
+            Clear(ref networkSettingsModal);
+            networkSettingsModal=Box("NetworkSettingsOverlay",stage,0,0,1600,900,new Color(.025f,.045f,.05f,.94f),true);
+            var panel=Box("NetworkSettingsPanel",networkSettingsModal,290,55,1020,790,Palette.Panel,true);
+            Text("Title",panel,"НАСТРОЙКИ ВТОРОЙ ФАЗЫ",32,22,956,44,30,Palette.Paper,true);
+            Text("Description",panel,"Настройте план просмотров и устройство сети перед публикацией.",32,76,956,30,18,Palette.Muted);
+            TuningSlider(panel,"Difficulty",0,"Сложность",.1f,3,tuningDraft.targetMultiplier,false,
+                v=>tuningDraft.targetMultiplier=v,()=>Count(Mathf.RoundToInt(session.BaseTarget*tuningDraft.targetMultiplier))+" просмотров",
+                "Меньше просмотров","Больше просмотров");
+            TuningSlider(panel,"ChannelCount",1,"Количество каналов",1,Mathf.Max(300,session.DefaultChannelCount),tuningDraft.Count(session.DefaultChannelCount),true,
+                v=>tuningDraft.channelCount=Mathf.RoundToInt(v),()=>tuningDraft.Count(session.DefaultChannelCount)+" каналов",
+                "Меньше каналов","Больше каналов");
+            TuningSlider(panel,"Connectivity",2,"Связность каналов",2,12,tuningDraft.meanLinks,false,
+                v=>tuningDraft.meanLinks=v,()=>"≈ "+tuningDraft.meanLinks.ToString("0.0")+" связей / канал",
+                "Редкая сеть","Плотная сеть");
+            TuningSlider(panel,"TopicMix",3,"Перемешанность тематик",0,1,tuningDraft.topicMix,false,
+                v=>tuningDraft.topicMix=v,()=>Mathf.RoundToInt(tuningDraft.topicMix*100)+" %",
+                "Почти замкнутые темы","Полный хаос");
+            TuningSlider(panel,"CampGrouping",4,"Сгруппированность по лагерю",0,1,tuningDraft.campGrouping,false,
+                v=>tuningDraft.campGrouping=v,()=>Mathf.RoundToInt(tuningDraft.campGrouping*100)+" %",
+                "Лагерь не влияет на связи","Связи преимущественно внутри лагеря");
+            TuningSlider(panel,"AudienceSpread",5,"Разброс подписчиков",0,2,tuningDraft.audienceSpread,false,
+                v=>tuningDraft.audienceSpread=v,()=>Mathf.Approximately(tuningDraft.audienceSpread,1) ? "Как в списке каналов" : tuningDraft.audienceSpread.ToString("0.00")+" ×",
+                "Одинаковые аудитории","Небольшие каналы и крупные хабы");
+            Text("ApplyHint",panel,"Разброс меняет аудитории каналов, сохраняя их общую сумму.\nПри увеличении числа каналов используются варианты из вашего списка.",32,650,956,46,15,Palette.Muted);
+            Button("ResetTuning",panel,"ПО УМОЛЧАНИЮ",32,714,300,50,()=>{tuningDraft=new PhaseTwoTuning();DrawNetworkSettings();});
+            Button("CancelTuning",panel,"ОТМЕНА",348,714,240,50,CloseNetworkSettings);
+            Button("ApplyTuning",panel,"ПРИМЕНИТЬ",604,714,384,50,()=>{
+                var next=tuningDraft.Copy();CloseNetworkSettings();session.ApplyTuning(next);
+            },true,true);
+        }
+        void TuningSlider(Transform panel,string name,int row,string title,float min,float max,float value,bool whole,Action<float> change,Func<string> format,string low,string high)
+        {
+            float top=122+row*86;
+            Text(name+"Title",panel,title,32,top,610,26,21,Palette.Paper,true);
+            var readout=Text(name+"Value",panel,format(),646,top,342,26,19,Palette.Accent,true);
+            readout.alignment=TextAlignmentOptions.Right;
+            var root=Box(name+"Slider",panel,32,top+29,956,30,new Color(0,0,0,0),true);
+            var track=Box("Track",root,0,12,956,6,Palette.Background);
+            var fill=Box("Fill",track,0,0,0,0,Palette.Accent);
+            fill.anchorMin=Vector2.zero;fill.anchorMax=Vector2.one;fill.offsetMin=fill.offsetMax=Vector2.zero;
+            var handleArea=Rect("HandleArea",root,9,0,938,30);
+            var handle=Box("Handle",handleArea,0,0,18,0,Palette.Paper,true);
+            handle.pivot=new Vector2(.5f,.5f);handle.anchorMin=handle.anchorMax=new Vector2(0,.5f);handle.anchoredPosition=Vector2.zero;
+            var slider=root.gameObject.AddComponent<Slider>();
+            slider.fillRect=fill;slider.handleRect=handle;slider.targetGraphic=handle.GetComponent<UnityEngine.UI.Image>();
+            slider.direction=Slider.Direction.LeftToRight;slider.minValue=min;slider.maxValue=max;slider.wholeNumbers=whole;
+            slider.SetValueWithoutNotify(value);
+            slider.onValueChanged.AddListener(v=>{change(v);readout.text=format();});
+            Text(name+"Low",panel,low,32,top+59,466,20,12,Palette.Muted);
+            var right=Text(name+"High",panel,high,510,top+59,478,20,12,Palette.Muted);right.alignment=TextAlignmentOptions.Right;
+        }
+        void ZoomNetwork(float zoom)
+        {
+            networkZoom=zoom;networkScrollPosition=Vector2.zero;networkScroll=null;Render();
+        }
+        void CampMark(Transform parent,Vector2 center,int camp)
+        {
+            var plate=Circle("CampMark"+camp,parent,center,7.5f,new Color(.055f,.09f,.105f));
+            var c=new Vector2(7.5f,7.5f);
+            if(camp==2) {Circle("Neutral",plate,c,3.2f,Palette.Muted,1.2f);return;}
+            float sign=camp==0 ? 1 : -1;
+            var a=c+new Vector2(0,-3.5f*sign);
+            var b=c+new Vector2(-3.5f,2.5f*sign);
+            var d=c+new Vector2(3.5f,2.5f*sign);
+            Line(plate,a,b,Palette.Muted,1.3f);Line(plate,b,d,Palette.Muted,1.3f);Line(plate,d,a,Palette.Muted,1.3f);
         }
         public void InspectChannel(int index)
         {
@@ -253,83 +337,114 @@ namespace Overtone
         {
             Header($"ФАЗА 02  /  ЗАДАНИЕ {session.Round+1:00} ИЗ 10","Управляйте распространением","Выберите продолжение, затем нажмите доступный канал с меткой «СТАРТ».");
             var left=Box("EditorPanel",content,40,190,500,686,Palette.Panel);
-            Text("Opening",left,session.CurrentRound.opening,24,20,452,92,27,Palette.Paper,true);
+            Text("Opening",left,session.CurrentRound.opening,24,16,452,82,25,Palette.Paper,true);
             for(int i=0;i<3;i++) {
                 int index=i; bool selected=session.SelectedOption==i;
-                var b=Button("Option"+i,left,"",24,130+i*144,452,132,()=>session.ChooseOption(index),session.Phase==GamePhase.Editing,selected);
+                var b=Button("Option"+i,left,"",24,108+i*130,452,114,()=>session.ChooseOption(index),session.Phase==GamePhase.Editing,selected);
                 Text("Number",b.transform,(i+1).ToString("00"),14,14,42,60,23,selected ? Palette.Ink : Palette.Accent,true);
-                var optionText=Text("OptionText",b.transform,session.CurrentRound.options[i].text,58,10,378,112,20,selected ? Palette.Ink : Palette.Paper);
+                var optionText=Text("OptionText",b.transform,session.CurrentRound.options[i].text,58,10,378,94,20,selected ? Palette.Ink : Palette.Paper);
                 optionText.enableAutoSizing=true; optionText.fontSizeMin=18; optionText.fontSizeMax=20;
             }
-            if(session.SelectedChannel>=0) Text("SelectedSeed",left,"Старт: "+session.Network[session.SelectedChannel].name,24,576,452,24,17,Palette.Accent);
+            if(session.SelectedChannel>=0) Text("SelectedSeed",left,"Старт: "+session.Network[session.SelectedChannel].name,24,552,452,24,17,Palette.Accent);
             bool ready=session.SelectedChannel>=0 && session.SelectedOption>=0 && session.Phase==GamePhase.Editing;
-            Button("Publish",left,session.Phase==GamePhase.Spreading ? "РАСПРОСТРАНЕНИЕ…" : "ОПУБЛИКОВАТЬ  →",24,600,452,62,session.Publish,ready,true);
-            var graph=Box("NetworkGraph",content,564,190,996,686,Palette.Panel);
-            foreach(var community in MediaNetwork.Communities) {
-                var cloudColor=Palette.Link;cloudColor.a=.055f;
-                Circle("CommunityCloud",graph,MapPosition(community.center),82,cloudColor);
-            }
+            Button("Publish",left,session.Phase==GamePhase.Spreading ? "РАСПРОСТРАНЕНИЕ…" : "ОПУБЛИКОВАТЬ  →",24,584,452,62,session.Publish,ready,true);
+            Button("NetworkSettings",left,"НАСТРОЙКИ СЕТИ И СЛОЖНОСТИ",24,494,452,44,OpenNetworkSettings,session.Phase==GamePhase.Editing);
+            Text("SettingsHint",left,"Параметры можно изменить до публикации.",24,654,452,20,13,Palette.Muted);
+            var graph=Box("NetworkGraph",content,564,190,996,686,new Color(.055f,.09f,.105f));
+            var viewport=Box("GraphViewport",graph,24,80,948,480,new Color(.055f,.09f,.105f),true);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            float zoom=networkZoom>0 ? networkZoom : Mathf.Min(1,Mathf.Min(948/MediaNetwork.Width,480/MediaNetwork.Height));
+            var canvas=Rect("GraphCanvas",viewport,0,0,Mathf.Max(948,MediaNetwork.Width*zoom),Mathf.Max(480,MediaNetwork.Height*zoom));
+            var map=Rect("GraphContent",canvas,(canvas.sizeDelta.x-MediaNetwork.Width*zoom)/2,(canvas.sizeDelta.y-MediaNetwork.Height*zoom)/2,MediaNetwork.Width,MediaNetwork.Height);
+            map.localScale=Vector3.one*zoom;
+            var scroll=viewport.gameObject.AddComponent<ScrollRect>();
+            networkScroll=scroll;
+            scroll.viewport=viewport;scroll.content=canvas;scroll.horizontal=true;scroll.vertical=true;
+            scroll.movementType=ScrollRect.MovementType.Clamped;scroll.inertia=false;scroll.scrollSensitivity=36;
+            networkScrollPosition=new Vector2(Mathf.Clamp(networkScrollPosition.x,948-canvas.sizeDelta.x,0),Mathf.Clamp(networkScrollPosition.y,0,canvas.sizeDelta.y-480));
+            canvas.anchoredPosition=networkScrollPosition;
+            scroll.onValueChanged.AddListener(_=>networkScrollPosition=canvas.anchoredPosition);
+            if(session.Network.Length==0) Text("EmptyNetwork",map,"Добавьте каналы в PhaseTwoChannels.json",24,24,900,48,22,Palette.Muted);
             var drawn=new System.Collections.Generic.HashSet<int>();
             for(int i=0;i<session.Network.Length;i++) foreach(int j in session.Network[i].neighbors) {
                 int key=GameSession.ConnectionKey(i,j); if(!drawn.Add(key)) continue;
                 bool active=session.CheckingBatch.Any(a=>GameSession.ConnectionKey(a.source,a.target)==key);
-                Color color=Palette.Link; color.a=.62f; float width=2.2f;
+                Color color=Palette.Link; color.a=.36f; float width=1.2f;
                 if(session.CheckedConnections.TryGetValue(key,out bool passed)) {color=passed ? Palette.Good : Palette.Bad; color.a=passed ? 1 : .65f;}
                 if(active) {color=Palette.Accent; width=4;}
-                bool distant=session.Network[i].cluster!=session.Network[j].cluster;
                 var direction=(Position(j)-Position(i)).normalized;
-                Connection(graph,Position(i)+direction*(Radius(i)+5),Position(j)-direction*(Radius(j)+5),color,distant ? width*.75f : width,distant);
-            }
-            foreach(var community in MediaNetwork.Communities) {
-                var center=MapPosition(community.center);
-                var label=Text("CommunityLabel",graph,community.label,center.x-39,center.y-19,78,38,11,Palette.Muted,true);
-                label.alignment=TextAlignmentOptions.Center;
+                Connection(map,Position(i)+direction*(Radius(i)+5),Position(j)-direction*(Radius(j)+5),color,width,false);
             }
             for(int i=0;i<session.Network.Length;i++) {
                 int index=i; var n=session.Network[i]; var center=Position(i); float radius=Radius(i);
                 bool selected=session.SelectedChannel==i, reached=session.Reached.Contains(i);
-                if(selected) Circle("SelectedRing"+i,graph,center,radius+6,Palette.Accent,3);
-                else if(n.canPublish) Circle("StartRing"+i,graph,center,radius+5,Palette.CampColor(n.camp),1.5f);
-                var rt=Circle("Channel"+i,graph,center,radius,reached ? Palette.Good : selected ? Palette.Accent : Palette.Background,0,true);
+                if(selected) Circle("SelectedRing"+i,map,center,radius+6,Palette.Accent,3);
+                var rt=Circle("Channel"+i,map,center,radius,reached ? Palette.Good : selected ? Palette.Accent : Palette.Background,0,true);
                 var button=rt.gameObject.AddComponent<UnityEngine.UI.Button>(); button.targetGraphic=rt.GetComponent<CircleGraphic>();
                 button.interactable=session.Phase==GamePhase.Editing;
                 var colors=button.colors; colors.normalColor=colors.selectedColor=colors.disabledColor=Color.white;
                 colors.highlightedColor=new Color(1.18f,1.18f,1.18f); colors.pressedColor=new Color(.8f,.8f,.8f); colors.fadeDuration=.12f; button.colors=colors;
                 button.onClick.AddListener(()=> { InspectChannel(index); if(n.canPublish) session.ChooseChannel(index); });
                 var pointer=rt.gameObject.AddComponent<ChannelPointer>(); pointer.view=this; pointer.channel=i;
-                Circle("CampOutline",rt,new Vector2(radius,radius),radius,Palette.CampColor(n.camp),2);
+                Circle("TopicOutline",rt,new Vector2(radius,radius),radius,MediaNetwork.Communities[n.cluster].color,2);
+                CampMark(map,new Vector2(center.x,center.y+radius+10),n.camp);
                 Color fg=reached||selected ? Palette.Ink : Palette.Paper;
-                float labelScale=Mathf.Min(1,radius/22);
-                var number=Text("NodeId",rt,(i+1).ToString("00"),0,radius-18*labelScale,radius*2,27*labelScale,22*labelScale,fg,true); number.alignment=TextAlignmentOptions.Center;
-                var audience=Text("Audience",rt,(n.audience/1000f).ToString("0.#")+"к",0,radius*2-18*labelScale,radius*2,16*labelScale,12*labelScale,fg); audience.alignment=TextAlignmentOptions.Center;
+                var number=Text("NodeId",rt,(i+1).ToString("00"),0,radius-9,radius*2,18,13,fg,true); number.alignment=TextAlignmentOptions.Center;
                 if(n.canPublish) {
-                    var badge=Box("StartBadge"+i,graph,center.x-23,center.y-radius-18,46,15,Palette.CampColor(n.camp));
-                    var label=Text("StartTag",badge,"СТАРТ",0,0,46,15,11,Palette.Ink,true); label.alignment=TextAlignmentOptions.Center;
+                    var badge=Rect("StartBadge"+i,map,center.x-23,center.y-radius-16,46,13);
+                    var label=Text("StartTag",badge,"СТАРТ",0,0,46,13,9,Palette.Accent,true); label.alignment=TextAlignmentOptions.Center;
                 }
                 if(session.NewWave.Contains(i)) StartCoroutine(PopNode(rt));
             }
-            Text("GraphLegend",graph,"ЗОЛОТО — ВЛАСТЬ   /   СИНИЙ — ОППОЗИЦИЯ   /   ЗЕЛЁНЫЙ — НЕЙТРАЛЬНЫЕ",24,12,948,24,14,Palette.Muted);
+            var legendViewport=Box("TopicLegendViewport",graph,24,10,948,40,new Color(0,0,0,0),true);
+            legendViewport.gameObject.AddComponent<RectMask2D>();
+            float legendWidth=Mathf.Max(948,Mathf.Ceil(MediaNetwork.Communities.Length/2f)*158);
+            var legend=Rect("TopicLegend",legendViewport,0,0,legendWidth,40);
+            var legendScroll=legendViewport.gameObject.AddComponent<ScrollRect>();
+            legendScroll.viewport=legendViewport;legendScroll.content=legend;legendScroll.horizontal=true;legendScroll.vertical=false;
+            legendScroll.movementType=ScrollRect.MovementType.Clamped;legendScroll.scrollSensitivity=30;
+            for(int i=0;i<MediaNetwork.Communities.Length;i++) {
+                var topic=MediaNetwork.Communities[i];float x=(i/2)*158,y=(i%2)*20;
+                Circle("TopicKey",legend,new Vector2(x+5,y+9),4,topic.color,1.5f);
+                var label=Text("TopicName",legend,topic.label,x+16,y,138,19,12,topic.color);
+                label.enableAutoSizing=true;label.fontSizeMin=9;label.fontSizeMax=12;
+            }
+            for(int camp=0;camp<3;camp++) {
+                CampMark(graph,new Vector2(32+camp*192,64),camp);
+                Text("CampKey",graph,Palette.CampName(camp),44+camp*192,54,170,20,12,Palette.Muted);
+            }
+            Text("NavigationHint",graph,"ПЕРЕТАСКИВАНИЕ / ПРОКРУТКА",598,54,230,20,10,Palette.Muted);
+            Button("ZoomOut",graph,"−",830,52,38,24,()=>ZoomNetwork(Mathf.Clamp(zoom/1.3f,.2f,3)));
+            Button("ZoomIn",graph,"+",872,52,38,24,()=>ZoomNetwork(Mathf.Clamp(zoom*1.3f,.2f,3)));
+            Button("FitGraph",graph,"ОБЗОР",914,52,58,24,()=>ZoomNetwork(0));
+            foreach(string control in new[]{"ZoomOut","ZoomIn","FitGraph"}) {
+                var label=graph.Find(control+"/Label").GetComponent<TextMeshProUGUI>();
+                label.rectTransform.offsetMin=Vector2.zero;label.rectTransform.offsetMax=Vector2.zero;
+                label.rectTransform.anchorMin=Vector2.zero;label.rectTransform.anchorMax=Vector2.one;
+                label.rectTransform.offsetMin=label.rectTransform.offsetMax=Vector2.zero;
+                label.fontSize=control=="FitGraph" ? 10 : 18;label.alignment=TextAlignmentOptions.Center;
+            }
             var detailPanel=Box("ChannelInfo",graph,24,580,948,66,Palette.Background);
-            string status=session.Network.Length+" каналов / 9 сообществ • пунктир — узкие переходы";
+            string status=session.Network.Length+" каналов / "+MediaNetwork.Communities.Length+" тематик • цвет — тема / значок снизу — лагерь";
             Color statusColor=Palette.Muted;
             if(session.CheckingBatch.Count>0) {
                 int source=session.Checking.source;
                 status="ПРОВЕРКА: "+session.Network[source].name+" → "+session.CheckingBatch.Count+" каналов одновременно";
                 statusColor=Palette.Accent;
-                Circle("CheckingSource",graph,Position(source),Radius(source)+6,Palette.Accent,1.5f);
+                Circle("CheckingSource",map,Position(source),Radius(source)+6,Palette.Accent,1.5f);
                 foreach(var attempt in session.CheckingBatch) {
                     var direction=(Position(attempt.target)-Position(source)).normalized;
                     var from=Position(source)+direction*(Radius(source)+6);
                     var to=Position(attempt.target)-direction*(Radius(attempt.target)+6);
-                    var halo=Circle("CheckingTarget"+attempt.target,graph,Position(attempt.target),Radius(attempt.target)+8,Palette.Accent,2);
-                    var dot=Circle("TransmissionPacket"+attempt.target,graph,Vector2.Lerp(from,to,session.CheckProgress),4.5f,Palette.Accent);
+                    var halo=Circle("CheckingTarget"+attempt.target,map,Position(attempt.target),Radius(attempt.target)+8,Palette.Accent,2);
+                    var dot=Circle("TransmissionPacket"+attempt.target,map,Vector2.Lerp(from,to,session.CheckProgress),4.5f,Palette.Accent);
                     transmissions.Add(new TransmissionVisual {dot=dot,halo=halo,from=from,to=to});
                 }
             } else if(session.LastBatch.Count>0) {
                 int passed=session.LastBatch.Count(a=>a.passed);
                 status="ПЕРЕДАНО: "+passed+" из "+session.LastBatch.Count+" / "+session.Network[session.LastAttempt.source].name;
                 statusColor=passed>0 ? Palette.Good : Palette.Bad;
-                foreach(var attempt in session.LastBatch) Circle("CheckResult"+attempt.target,graph,Position(attempt.target),Radius(attempt.target)+6,attempt.passed ? Palette.Good : Palette.Bad,3);
+                foreach(var attempt in session.LastBatch) Circle("CheckResult"+attempt.target,map,Position(attempt.target),Radius(attempt.target)+6,attempt.passed ? Palette.Good : Palette.Bad,3);
             }
             Text("CheckStatus",detailPanel,status,12,6,924,23,16,statusColor,true);
             channelDetails=Text("ChannelDetails",detailPanel,"Наведите курсор на узел, чтобы увидеть тематику и аудиторию.",12,34,924,26,16,Palette.Paper);

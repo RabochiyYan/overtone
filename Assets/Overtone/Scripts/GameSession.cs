@@ -11,6 +11,8 @@ namespace Overtone
         public int phase, lives, folder, cardIndex, round, successfulRounds, runSeed;
         public int version;
         public float sortingSeconds;
+        public PhaseTwoTuning phaseTwo;
+        public int networkSeed;
     }
     public sealed class GameSession : MonoBehaviour
     {
@@ -27,7 +29,10 @@ namespace Overtone
         public int SelectedOption { get; private set; } = -1;
         public int SelectedChannel { get; private set; } = -1;
         public int Views { get; private set; }
-        public int Target { get { return settings.viewTargets[Mathf.Min(Round,settings.viewTargets.Length-1)]; } }
+        public int Target { get { return Mathf.Max(1,Mathf.RoundToInt(BaseTarget*Tuning.targetMultiplier)); } }
+        public int BaseTarget { get { return settings.viewTargets[Mathf.Min(Round,settings.viewTargets.Length-1)]; } }
+        public PhaseTwoTuning Tuning { get; private set; } = new PhaseTwoTuning();
+        public int DefaultChannelCount { get { return channelCatalog.channels.Length; } }
         public bool Paused { get; private set; }
         public bool Busy { get; private set; }
         public string Feedback { get; private set; } = "";
@@ -51,13 +56,15 @@ namespace Overtone
         public SortingNews CurrentCard { get { return sorting.cards[CardIndex % sorting.cards.Length]; } }
         public NewsRound CurrentRound { get { return news.rounds[Round]; } }
         public event Action Changed;
-        int runSeed;
+        int runSeed,networkSeed;
+        MediaChannelList channelCatalog;
         double clockSample;
         SpreadSimulation simulation;
         public void Initialize()
         {
             news=JsonUtility.FromJson<PhaseTwoNews>(Resources.Load<TextAsset>("PhaseTwoNews").text);
             sorting=JsonUtility.FromJson<PhaseOneNews>(Resources.Load<TextAsset>("PhaseOneNews").text);
+            channelCatalog=MediaNetwork.LoadCatalog();networkSeed=Guid.NewGuid().GetHashCode();
             Network=MakeNetwork(); Phase=GamePhase.Menu; Notify();
         }
         void Update()
@@ -87,6 +94,9 @@ namespace Overtone
             try {
                 var s=JsonUtility.FromJson<SessionSave>(PlayerPrefs.GetString(SaveKey));
                 if(s==null || s.round<0 || s.round>=news.rounds.Length || s.lives<1) { StartRun(); return; }
+                Tuning=s.phaseTwo ?? new PhaseTwoTuning();Tuning.Clamp(DefaultChannelCount);
+                if(s.version>=3)networkSeed=s.networkSeed;
+                Network=MakeNetwork();view.ResetNetworkView();
                 Lives=s.lives; Folder=s.folder; CardIndex=s.cardIndex; Round=s.round;
                 SuccessfulRounds=s.successfulRounds; runSeed=s.runSeed; Busy=false; Paused=false; FailureReason="";
                 SortingTimeLeft=s.version>=2 ? Mathf.Clamp(s.sortingSeconds,0,settings.sortingSeconds) : settings.sortingSeconds;
@@ -215,10 +225,23 @@ namespace Overtone
             var phase=Phase==GamePhase.Sorting && !phaseTwoReady ? GamePhase.Sorting : GamePhase.Editing;
             // Briefing must resume with the new phase's three lives.
             var s=new SessionSave { phase=(int)phase,lives=phaseTwoReady ? settings.startingLives : Lives,
-                folder=Folder,cardIndex=CardIndex+(Phase==GamePhase.Sorting && Busy ? 1 : 0),round=Round,successfulRounds=SuccessfulRounds,runSeed=runSeed,version=2,sortingSeconds=SortingTimeLeft };
+                folder=Folder,cardIndex=CardIndex+(Phase==GamePhase.Sorting && Busy ? 1 : 0),round=Round,successfulRounds=SuccessfulRounds,runSeed=runSeed,version=3,sortingSeconds=SortingTimeLeft,phaseTwo=Tuning,networkSeed=networkSeed };
             PlayerPrefs.SetString(SaveKey,JsonUtility.ToJson(s)); PlayerPrefs.Save();
         }
         void Notify() { Changed?.Invoke(); }
-        static MediaChannel[] MakeNetwork() { return MediaNetwork.Create(); }
+        MediaChannel[] MakeNetwork() { return MediaNetwork.Create(channelCatalog,networkSeed,Tuning); }
+        public void ApplyTuning(PhaseTwoTuning requested)
+        {
+            if(Phase!=GamePhase.Editing || Paused || requested==null)return;
+            var next=requested.Copy();next.Clamp(DefaultChannelCount);
+            bool rebuild=!Tuning.SameNetwork(next,DefaultChannelCount);
+            Tuning=next;
+            if(rebuild) {
+                Network=MakeNetwork();SelectedChannel=-1;
+                Reached.Clear();NewWave.Clear();CheckingBatch.Clear();LastBatch.Clear();CheckedConnections.Clear();
+                Views=0;WaveNumber=0;CheckProgress=0;view.ResetNetworkView();
+            }
+            Save();Notify();
+        }
     }
 }
