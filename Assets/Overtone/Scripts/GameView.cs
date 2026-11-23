@@ -9,7 +9,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 namespace Overtone
 {
-    public sealed class GameView : MonoBehaviour
+    public sealed partial class GameView : MonoBehaviour
     {
         [SerializeField] public TMP_FontAsset font;
         [SerializeField] public RectTransform stage;
@@ -66,7 +66,7 @@ namespace Overtone
                 if(timerFill!=null)timerFill.sizeDelta=new Vector2(240*Mathf.Clamp01(session.SortingTimeLeft/Mathf.Max(1,session.settings.sortingSeconds)),4);
             }
             var k=Keyboard.current; if(k==null) return;
-            if(k.escapeKey.wasPressedThisFrame) { if(networkSettingsModal!=null) CloseNetworkSettings(); else session.TogglePause(); }
+            if(k.escapeKey.wasPressedThisFrame) { if(session.UpgradeWindowOpen) CloseUpgrades(); else if(networkSettingsModal!=null) CloseNetworkSettings(); else session.TogglePause(); }
             if(session.Phase==GamePhase.Sorting && !session.Paused) {
                 if(k.leftArrowKey.wasPressedThisFrame || k.aKey.wasPressedThisFrame) session.Sort(false);
                 if(k.rightArrowKey.wasPressedThisFrame || k.dKey.wasPressedThisFrame) session.Sort(true);
@@ -152,6 +152,7 @@ namespace Overtone
                 case GamePhase.Won: case GamePhase.Fired: End(); break;
             }
             RenderPause();
+            if(session.UpgradeWindowOpen) DrawUpgrades();
         }
         void Menu()
         {
@@ -335,20 +336,21 @@ namespace Overtone
         }
         void Network()
         {
-            Header($"ФАЗА 02  /  ЗАДАНИЕ {session.Round+1:00} ИЗ 10","Управляйте распространением","Выберите продолжение, затем нажмите доступный канал с меткой «СТАРТ».");
+            Header($"ФАЗА 02  /  ЗАДАНИЕ {session.Round+1:00} ИЗ 10","Управляйте распространением",session.ChoosingSecondStart ? "ВТОРОЙ СТАРТ: выберите неохваченный канал. Просмотры и пройденные каналы сохраняются." : "Выберите продолжение, затем нажмите доступный канал с меткой «СТАРТ».");
             var left=Box("EditorPanel",content,40,190,500,686,Palette.Panel);
             Text("Opening",left,session.CurrentRound.opening,24,16,452,82,25,Palette.Paper,true);
             for(int i=0;i<3;i++) {
                 int index=i; bool selected=session.SelectedOption==i;
-                var b=Button("Option"+i,left,"",24,108+i*130,452,114,()=>session.ChooseOption(index),session.Phase==GamePhase.Editing,selected);
+                var b=Button("Option"+i,left,"",24,108+i*130,452,114,()=>session.ChooseOption(index),session.Phase==GamePhase.Editing && !session.ChoosingSecondStart,selected);
                 Text("Number",b.transform,(i+1).ToString("00"),14,14,42,60,23,selected ? Palette.Ink : Palette.Accent,true);
                 var optionText=Text("OptionText",b.transform,session.CurrentRound.options[i].text,58,10,378,94,20,selected ? Palette.Ink : Palette.Paper);
                 optionText.enableAutoSizing=true; optionText.fontSizeMin=18; optionText.fontSizeMax=20;
             }
             if(session.SelectedChannel>=0) Text("SelectedSeed",left,"Старт: "+session.Network[session.SelectedChannel].name,24,552,452,24,17,Palette.Accent);
             bool ready=session.SelectedChannel>=0 && session.SelectedOption>=0 && session.Phase==GamePhase.Editing;
-            Button("Publish",left,session.Phase==GamePhase.Spreading ? "РАСПРОСТРАНЕНИЕ…" : "ОПУБЛИКОВАТЬ  →",24,584,452,62,session.Publish,ready,true);
-            Button("NetworkSettings",left,"НАСТРОЙКИ СЕТИ И СЛОЖНОСТИ",24,494,452,44,OpenNetworkSettings,session.Phase==GamePhase.Editing);
+            Button("Publish",left,session.Phase==GamePhase.Spreading ? "РАСПРОСТРАНЕНИЕ…" : session.ChoosingSecondStart ? "ЗАПУСТИТЬ ЕЩЁ КАНАЛ  →" : "ОПУБЛИКОВАТЬ  →",24,584,452,62,session.Publish,ready,true);
+            Button("Upgrades",content,"УЛУЧШЕНИЯ  /  "+session.Upgrades.points+" Б.",850,20,290,42,OpenUpgrades);
+            Button("NetworkSettings",left,"НАСТРОЙКИ СЕТИ И СЛОЖНОСТИ",24,494,452,44,OpenNetworkSettings,session.Phase==GamePhase.Editing && !session.ChoosingSecondStart);
             Text("SettingsHint",left,"Параметры можно изменить до публикации.",24,654,452,20,13,Palette.Muted);
             var graph=Box("NetworkGraph",content,564,190,996,686,new Color(.055f,.09f,.105f));
             var viewport=Box("GraphViewport",graph,24,80,948,480,new Color(.055f,.09f,.105f),true);
@@ -381,7 +383,7 @@ namespace Overtone
                 if(selected) Circle("SelectedRing"+i,map,center,radius+6,Palette.Accent,3);
                 var rt=Circle("Channel"+i,map,center,radius,reached ? Palette.Good : selected ? Palette.Accent : Palette.Background,0,true);
                 var button=rt.gameObject.AddComponent<UnityEngine.UI.Button>(); button.targetGraphic=rt.GetComponent<CircleGraphic>();
-                button.interactable=session.Phase==GamePhase.Editing;
+                button.interactable=session.CanSelectChannel(i);
                 var colors=button.colors; colors.normalColor=colors.selectedColor=colors.disabledColor=Color.white;
                 colors.highlightedColor=new Color(1.18f,1.18f,1.18f); colors.pressedColor=new Color(.8f,.8f,.8f); colors.fadeDuration=.12f; button.colors=colors;
                 button.onClick.AddListener(()=> { InspectChannel(index); if(n.canPublish) session.ChooseChannel(index); });
@@ -454,7 +456,7 @@ namespace Overtone
             Box("ProgressTrack",graph,24,658,948,12,Palette.Background);
             var fill=Box("ProgressFill",graph,24,658,948*Mathf.Clamp01(shownViews/session.Target),12,Palette.Accent);
             StartCoroutine(AnimateViews(counter,fill));
-            if(session.Phase==GamePhase.RoundResult) ResultOverlay();
+            if(session.Phase==GamePhase.RoundResult && !session.CanSecondStart) ResultOverlay();
         }
         IEnumerator PopNode(RectTransform rt)
         {
@@ -497,7 +499,8 @@ namespace Overtone
             var option=session.CurrentRound.options[session.SelectedOption];
             Text("Stamp",panel,session.LastRoundWon ? "ПЛАН ВЫПОЛНЕН" : "ПРЕДУПРЕЖДЕНИЕ",36,26,1028,60,43,session.LastRoundWon ? Palette.Ink : Palette.Stamp,true);
             Text("ResultViews",panel,$"{Count(session.Views)} просмотров  /  план {Count(session.Target)}\nКаналов охвачено: {session.Reached.Count} из {session.Network.Length}",36,109,1028,90,29,Palette.Ink,true);
-            Text("Reveal",panel,$"Параметры выбранного продолжения:\n{option.kind}  •  {option.topic}  •  {Palette.CampName(option.camp)}\nВиральность: {option.virality:0.00}  /  Правдоподобность: {option.plausibility:0.00}",36,221,1028,110,23,Palette.Ink);
+            Text("Reveal",panel,$"Улучшения: +{session.RoundPoints} б. / остаток {Count(session.Upgrades.surplusViews)} из 10 000\nПараметры продолжения:\n{option.kind}  •  {option.topic}  •  {Palette.CampName(option.camp)}\nВиральность: {option.virality:0.00}  /  Правдоподобность: {option.plausibility:0.00}",36,211,1028,120,21,Palette.Ink);
+            Button("ResultUpgrades",panel,"УЛУЧШЕНИЯ / "+session.Upgrades.points+" Б.",700,156,360,44,OpenUpgrades,session.Lives>0);
             Button("NextRound",panel,session.Lives<=0 ? "ПОЛУЧИТЬ ПРИКАЗ ОБ УВОЛЬНЕНИИ" : session.Round==9 ? "ЗАВЕРШИТЬ РАБОЧИЙ ДЕНЬ" : "СЛЕДУЮЩЕЕ ЗАДАНИЕ  →",36,354,1028,62,session.NextRound,true,true);
         }
         void End()

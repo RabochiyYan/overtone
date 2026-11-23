@@ -47,19 +47,23 @@ namespace Overtone
         readonly NewsOption news;
         readonly Random random;
         readonly double bridgeMultiplier;
+        readonly PhaseTwoUpgrades upgrades;
+        int startingChannel=-1, crossTopicAttempts;
         readonly HashSet<int> reached = new HashSet<int>();
         List<int> frontier = new List<int>();
 
         public int Views { get; private set; }
+        public int CrossTopicAttempts { get { return crossTopicAttempts; } }
         public int ReachedCount { get { return reached.Count; } }
         public bool Complete { get { return frontier.Count == 0; } }
 
-        public SpreadSimulation(MediaChannel[] network, NewsOption news, int seed, double bridgeMultiplier = .85)
+        public SpreadSimulation(MediaChannel[] network, NewsOption news, int seed, double bridgeMultiplier = .85, PhaseTwoUpgrades upgrades = null)
         {
             this.network = network;
             this.news = news;
             random = new Random(seed);
             this.bridgeMultiplier = bridgeMultiplier;
+            this.upgrades = upgrades ?? new PhaseTwoUpgrades();
         }
 
         public SpreadWave Publish(int channel)
@@ -67,10 +71,34 @@ namespace Overtone
             if (reached.Count > 0) throw new InvalidOperationException("Story already published.");
             if (channel < 0 || channel >= network.Length || !network[channel].canPublish)
                 throw new ArgumentOutOfRangeException(nameof(channel));
+            startingChannel=channel;
             var wave = new SpreadWave();
             Infect(channel, wave);
             frontier.Add(channel);
             return wave;
+        }
+
+        public SpreadWave PublishAdditional(int channel)
+        {
+            if(!Complete || reached.Count==0) throw new InvalidOperationException("Additional start requires a completed spread.");
+            if(channel<0 || channel>=network.Length || !network[channel].canPublish || reached.Contains(channel))
+                throw new ArgumentOutOfRangeException(nameof(channel));
+            startingChannel=channel;
+            var wave=new SpreadWave();
+            Infect(channel,wave);
+            frontier.Add(channel);
+            return wave;
+        }
+
+        // Resume the completed first spread before adding a second seed.
+        public void RestoreCompleted(IEnumerable<int> channels,int usedCrossTopicAttempts)
+        {
+            if(reached.Count>0 || !Complete) throw new InvalidOperationException("Simulation already started.");
+            foreach(int channel in channels) {
+                if(channel<0 || channel>=network.Length) throw new ArgumentOutOfRangeException(nameof(channels));
+                if(reached.Add(channel)) Views+=network[channel].audience;
+            }
+            crossTopicAttempts=Math.Max(0,usedCrossTopicAttempts);
         }
 
         public SpreadWave Step()
@@ -82,7 +110,10 @@ namespace Overtone
                 foreach (int target in network[source].neighbors)
                 {
                     if (reached.Contains(target)) continue;
-                    bool passed = random.NextDouble() < Probability(news, network[target]) * (network[source].cluster==network[target].cluster ? 1 : bridgeMultiplier);
+                    bool crossTopic=network[source].topic!=network[target].topic;
+                    bool guaranteed=crossTopic && crossTopicAttempts<upgrades.crossTopic;
+                    if(crossTopic) crossTopicAttempts++;
+                    bool passed = random.NextDouble() < (guaranteed ? 1 : TransmissionProbability(source,target));
                     wave.attempts.Add(new SpreadAttempt { source=source, target=target, passed=passed });
                     if (!passed) continue;
                     Infect(target, wave);
@@ -91,6 +122,16 @@ namespace Overtone
             }
             frontier = next;
             return wave;
+        }
+
+        public double TransmissionProbability(int source,int target)
+        {
+            if(source==startingChannel && upgrades.startingChannel>=3) return 1;
+            double value=Probability(news,network[target])*(network[source].cluster==network[target].cluster ? 1 : bridgeMultiplier);
+            int level=news.camp==(int)Camp.Opposition ? upgrades.liberal : news.camp==(int)Camp.Government ? upgrades.conservative : 0;
+            value*=1+PhaseTwoUpgrades.CampBonus(level);
+            if(source==startingChannel) value*=upgrades.startingChannel==1 ? 1.5 : upgrades.startingChannel>=2 ? 2 : 1;
+            return Math.Min(1,value);
         }
 
         void Infect(int channel, SpreadWave wave)

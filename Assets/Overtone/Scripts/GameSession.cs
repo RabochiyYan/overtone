@@ -13,6 +13,12 @@ namespace Overtone
         public float sortingSeconds;
         public PhaseTwoTuning phaseTwo;
         public int networkSeed;
+        public PhaseTwoUpgrades upgrades;
+        public bool retryUsed, choosingSecondStart, lastRoundWon;
+        public int firstChannel=-1, selectedOption=-1, selectedChannel=-1, views, roundPoints;
+        public int[] reached, checkedEdges;
+        public bool[] checkedPassed;
+        public int crossTopicAttempts, waveNumber;
     }
     public sealed class GameSession : MonoBehaviour
     {
@@ -33,6 +39,14 @@ namespace Overtone
         public int BaseTarget { get { return settings.viewTargets[Mathf.Min(Round,settings.viewTargets.Length-1)]; } }
         public PhaseTwoTuning Tuning { get; private set; } = new PhaseTwoTuning();
         public int DefaultChannelCount { get { return channelCatalog.DefaultCount; } }
+        public PhaseTwoUpgrades Upgrades { get; private set; } = new PhaseTwoUpgrades();
+        public bool UpgradeWindowOpen { get; set; }
+        public bool RetryUsed { get; private set; }
+        public bool ChoosingSecondStart { get; private set; }
+        public int RoundPoints { get; private set; }
+        int firstChannel=-1;
+        public bool CanSelectChannel(int index) { return Phase==GamePhase.Editing && index>=0 && index<Network.Length && Network[index].canPublish && (!ChoosingSecondStart || !Reached.Contains(index)); }
+        public bool CanSecondStart { get { return Phase==GamePhase.RoundResult && !LastRoundWon && Upgrades.secondStart>0 && !RetryUsed && Network.Where((n,i)=>n.canPublish && !Reached.Contains(i)).Any(); } }
         public bool Paused { get; private set; }
         public bool Busy { get; private set; }
         public string Feedback { get; private set; } = "";
@@ -80,11 +94,12 @@ namespace Overtone
         }
         public void StartRun()
         {
-            StopAllCoroutines(); Paused=false; Busy=false; Lives=settings.startingLives;
+            StopAllCoroutines(); UpgradeWindowOpen=false; Paused=false; Busy=false; Lives=settings.startingLives;
             Folder=0; CardIndex=0; Round=0; SuccessfulRounds=0; runSeed=Environment.TickCount;
             SortingTimeLeft=settings.sortingSeconds; FailureReason=""; clockSample=Time.realtimeSinceStartupAsDouble;
             CheckingBatch.Clear(); LastBatch.Clear(); NewWave.Clear(); Reached.Clear(); CheckedConnections.Clear();
             Views=0; WaveNumber=0; CheckProgress=0; SelectedOption=-1; SelectedChannel=-1;
+            Upgrades=new PhaseTwoUpgrades(); RetryUsed=false; ChoosingSecondStart=false; RoundPoints=0; firstChannel=-1;
             Phase=GamePhase.Sorting; Feedback="Проверьте источник. Реальные новости — в папку, фейки — в корзину.";
             Save(); Notify();
         }
@@ -93,17 +108,40 @@ namespace Overtone
             if(!HasSave) return;
             try {
                 var s=JsonUtility.FromJson<SessionSave>(PlayerPrefs.GetString(SaveKey));
-                if(s==null || s.round<0 || s.round>=news.rounds.Length || s.lives<1) { StartRun(); return; }
+                if(s==null || s.round<0 || s.round>=news.rounds.Length || (s.lives<1 && s.phase!=(int)GamePhase.RoundResult)) { StartRun(); return; }
                 Tuning=s.phaseTwo ?? new PhaseTwoTuning();Tuning.Clamp(DefaultChannelCount);
                 if(s.version>=3)networkSeed=s.networkSeed;
+                Upgrades=s.upgrades ?? new PhaseTwoUpgrades();
                 Network=MakeNetwork();view.ResetNetworkView();
                 Lives=s.lives; Folder=s.folder; CardIndex=s.cardIndex; Round=s.round;
                 SuccessfulRounds=s.successfulRounds; runSeed=s.runSeed; Busy=false; Paused=false; FailureReason="";
                 SortingTimeLeft=s.version>=2 ? Mathf.Max(0,s.sortingSeconds) : settings.sortingSeconds;
                 clockSample=Time.realtimeSinceStartupAsDouble;
                 if(s.phase==(int)GamePhase.Sorting) { Phase=GamePhase.Sorting; Feedback="Рабочий день продолжается."; if(SortingTimeLeft<=0) {FailureReason="Время на проверку истекло. Папка не собрана.";Finish(false);return;} }
-                else PrepareRound();
-                Notify();
+                else {
+                    PrepareRound(false);
+                    if(s.version>=4) {
+                        RetryUsed=s.retryUsed; ChoosingSecondStart=s.choosingSecondStart; firstChannel=s.firstChannel;
+                        if(ChoosingSecondStart) {
+                            SelectedOption=s.selectedOption;
+                            if(s.version>=5) {
+                                foreach(int i in s.reached ?? new int[0]) Reached.Add(i);
+                                Views=s.views; WaveNumber=s.waveNumber;
+                                for(int i=0;i<(s.checkedEdges?.Length ?? 0) && i<(s.checkedPassed?.Length ?? 0);i++)
+                                    CheckedConnections[s.checkedEdges[i]]=s.checkedPassed[i];
+                                simulation=new SpreadSimulation(Network,CurrentRound.options[SelectedOption],runSeed+Round*97+7919,settings.crossClusterMultiplier,Upgrades);
+                                simulation.RestoreCompleted(Reached,s.crossTopicAttempts);
+                            }
+                            Feedback="Выберите ещё один неохваченный стартовый канал. Просмотры и пройденные каналы сохраняются.";
+                        }
+                        if(s.phase==(int)GamePhase.RoundResult) {
+                            Phase=GamePhase.RoundResult; LastRoundWon=s.lastRoundWon; Views=s.views; RoundPoints=s.roundPoints;
+                            SelectedOption=s.selectedOption; SelectedChannel=s.selectedChannel;
+                            foreach(int i in s.reached ?? new int[0]) Reached.Add(i);
+                        }
+                    }
+                }
+                if(CanSecondStart) ChooseSecondStart(); else Notify();
             } catch { StartRun(); }
         }
         public void Sort(bool intoFolder)
@@ -138,27 +176,42 @@ namespace Overtone
             if(Phase!=GamePhase.Briefing) return;
             Lives=settings.startingLives; Round=0; PrepareRound();
         }
-        void PrepareRound()
+        void PrepareRound(bool save=true)
         {
             SelectedOption=-1; SelectedChannel=-1; Views=0; WaveNumber=0; Reached.Clear(); NewWave.Clear();
+            RetryUsed=false; ChoosingSecondStart=false; firstChannel=-1; RoundPoints=0; LastRoundWon=false; simulation=null;
             CheckingBatch.Clear(); LastBatch.Clear(); CheckProgress=0; CheckedConnections.Clear();
-            Phase=GamePhase.Editing; Busy=false; Feedback="Выберите продолжение и один доступный канал для публикации."; Save(); Notify();
+            Phase=GamePhase.Editing; Busy=false; Feedback="Выберите продолжение и один доступный канал для публикации."; if(save) Save(); Notify();
         }
         public void ChooseOption(int index)
         {
-            if(Phase!=GamePhase.Editing || Paused || index<0 || index>=3) return;
+            if(Phase!=GamePhase.Editing || Paused || ChoosingSecondStart || index<0 || index>=3) return;
             SelectedOption=index; view.PlayTone(420); Notify();
         }
         public void ChooseChannel(int index)
         {
-            if(Phase!=GamePhase.Editing || Paused || index<0 || index>=Network.Length || !Network[index].canPublish) return;
+            if(Paused || !CanSelectChannel(index)) return;
             SelectedChannel=index; view.PlayTone(480); Notify();
         }
         public void Publish()
         {
             if(Phase!=GamePhase.Editing || Paused || SelectedOption<0 || SelectedChannel<0) return;
-            simulation=new SpreadSimulation(Network,CurrentRound.options[SelectedOption],runSeed+Round*97,settings.crossClusterMultiplier);
-            Phase=GamePhase.Spreading; Busy=true; ApplyWave(simulation.Publish(SelectedChannel));
+            if(!CanSelectChannel(SelectedChannel)) return;
+            bool additional=ChoosingSecondStart;
+            SpreadWave initial;
+            if(additional) {
+                if(simulation==null) {
+                    simulation=new SpreadSimulation(Network,CurrentRound.options[SelectedOption],runSeed+Round*97+7919,settings.crossClusterMultiplier,Upgrades);
+                    simulation.RestoreCompleted(Reached,0);
+                }
+                initial=simulation.PublishAdditional(SelectedChannel);
+            } else {
+                firstChannel=SelectedChannel;
+                simulation=new SpreadSimulation(Network,CurrentRound.options[SelectedOption],runSeed+Round*97,settings.crossClusterMultiplier,Upgrades);
+                initial=simulation.Publish(SelectedChannel);
+            }
+            ChoosingSecondStart=false;
+            Phase=GamePhase.Spreading; Busy=true; ApplyWave(initial);
             Feedback="Новость опубликована. Наблюдайте за цепочкой перепостов."; Notify(); StartCoroutine(Spread());
         }
         IEnumerator Spread()
@@ -171,7 +224,7 @@ namespace Overtone
                     CheckProgress=0; NewWave.Clear(); Notify();
                     float elapsed=0;
                     while(elapsed<settings.checkDuration) {
-                        if(!Paused) elapsed+=Time.unscaledDeltaTime;
+                        if(!Paused && !UpgradeWindowOpen) elapsed+=Time.unscaledDeltaTime;
                         CheckProgress=Mathf.Clamp01(elapsed/Mathf.Max(.01f,settings.checkDuration));
                         yield return null;
                     }
@@ -187,15 +240,18 @@ namespace Overtone
                 }
             }
             yield return WaitUnpaused(.35f);
-            LastRoundWon=Views>=Target; if(LastRoundWon) SuccessfulRounds++; else Lives--;
+            LastRoundWon=Views>=Target;
             Busy=false; Phase=GamePhase.RoundResult;
+            if(CanSecondStart) { ChooseSecondStart(); yield break; }
+            if(LastRoundWon) SuccessfulRounds++; else Lives--;
+            RoundPoints=Upgrades.Award(Views,Target);
             Feedback=LastRoundWon ? "ПЛАН ВЫПОЛНЕН / Информация дошла до нужной аудитории." : "ПЛАН НЕ ВЫПОЛНЕН / Руководство выносит предупреждение.";
-            view.PlayTone(LastRoundWon ? 850 : 150); Notify();
+            view.PlayTone(LastRoundWon ? 850 : 150); Save(); Notify();
         }
         IEnumerator WaitUnpaused(float duration)
         {
-            for(float t=0;t<duration;) { if(!Paused) t+=Time.unscaledDeltaTime; yield return null; }
-            while(Paused) yield return null;
+            for(float t=0;t<duration;) { if(!Paused && !UpgradeWindowOpen) t+=Time.unscaledDeltaTime; yield return null; }
+            while(Paused || UpgradeWindowOpen) yield return null;
         }
         void ApplyWave(SpreadWave wave)
         {
@@ -206,7 +262,25 @@ namespace Overtone
         {
             if(Phase!=GamePhase.RoundResult || Paused) return;
             if(Lives<=0) { Finish(false); return; }
+            if(CanSecondStart) Lives--;
+            if(Lives<=0) { Finish(false); return; }
             Round++; if(Round>=news.rounds.Length) { Round=news.rounds.Length-1; Finish(true); } else PrepareRound();
+        }
+        public void ChooseSecondStart()
+        {
+            if(!CanSecondStart || Paused) return;
+            RetryUsed=true; ChoosingSecondStart=true; SelectedChannel=-1;
+            NewWave.Clear(); CheckingBatch.Clear(); LastBatch.Clear();
+            Phase=GamePhase.Editing; Feedback="Выберите ещё один неохваченный стартовый канал. Просмотры и пройденные каналы сохраняются.";
+            Save(); Notify();
+        }
+        public bool BuyUpgrade(UpgradeKind kind)
+        {
+            if(Paused || Phase!=GamePhase.Editing && Phase!=GamePhase.RoundResult || Lives<=0) return false;
+            // A failed round is already settled; a second start must be acquired before publication.
+            if(Phase==GamePhase.RoundResult && !LastRoundWon && kind==UpgradeKind.SecondStart) return false;
+            if(!Upgrades.Buy(kind)) return false;
+            Save(); Notify(); return true;
         }
         void Finish(bool won)
         {
@@ -220,23 +294,26 @@ namespace Overtone
         }
         public void ReturnToMenu()
         {
-            if(Phase==GamePhase.Sorting && Lives>0 && SortingTimeLeft>0) Save();
-            StopAllCoroutines(); Busy=false; Paused=false; Phase=GamePhase.Menu; Notify();
+            if(!(Phase==GamePhase.Spreading && RetryUsed) && Lives>0 && (Phase==GamePhase.Sorting && SortingTimeLeft>0 || Phase==GamePhase.Editing || Phase==GamePhase.Spreading || Phase==GamePhase.RoundResult)) Save();
+            StopAllCoroutines(); UpgradeWindowOpen=false; Busy=false; Paused=false; Phase=GamePhase.Menu; Notify();
         }
         void Save()
         {
             bool phaseTwoReady=Phase==GamePhase.Briefing || Phase==GamePhase.Sorting && Folder>=settings.folderTarget;
-            var phase=Phase==GamePhase.Sorting && !phaseTwoReady ? GamePhase.Sorting : GamePhase.Editing;
+            var phase=Phase==GamePhase.RoundResult ? GamePhase.RoundResult : Phase==GamePhase.Sorting && !phaseTwoReady ? GamePhase.Sorting : GamePhase.Editing;
             // Briefing must resume with the new phase's three lives.
             var s=new SessionSave { phase=(int)phase,lives=phaseTwoReady ? settings.startingLives : Lives,
-                folder=Folder,cardIndex=CardIndex+(Phase==GamePhase.Sorting && Busy ? 1 : 0),round=Round,successfulRounds=SuccessfulRounds,runSeed=runSeed,version=3,sortingSeconds=SortingTimeLeft,phaseTwo=Tuning,networkSeed=networkSeed };
+                folder=Folder,cardIndex=CardIndex+(Phase==GamePhase.Sorting && Busy ? 1 : 0),round=Round,successfulRounds=SuccessfulRounds,runSeed=runSeed,version=5,sortingSeconds=SortingTimeLeft,phaseTwo=Tuning,networkSeed=networkSeed,
+                crossTopicAttempts=simulation?.CrossTopicAttempts ?? 0,waveNumber=WaveNumber,checkedEdges=CheckedConnections.Keys.ToArray(),checkedPassed=CheckedConnections.Values.ToArray(),
+                upgrades=Upgrades,retryUsed=RetryUsed,choosingSecondStart=ChoosingSecondStart || Phase==GamePhase.Spreading && RetryUsed,firstChannel=firstChannel,
+                selectedOption=SelectedOption,selectedChannel=SelectedChannel,views=Views,reached=Reached.ToArray(),lastRoundWon=LastRoundWon,roundPoints=RoundPoints };
             PlayerPrefs.SetString(SaveKey,JsonUtility.ToJson(s)); PlayerPrefs.Save();
         }
         void Notify() { Changed?.Invoke(); }
         MediaChannel[] MakeNetwork() { return MediaNetwork.Create(channelCatalog,networkSeed,Tuning); }
         public void ApplyTuning(PhaseTwoTuning requested)
         {
-            if(Phase!=GamePhase.Editing || Paused || requested==null)return;
+            if(Phase!=GamePhase.Editing || Paused || ChoosingSecondStart || requested==null)return;
             var next=requested.Copy();next.Clamp(DefaultChannelCount);
             bool rebuild=!Tuning.SameNetwork(next,DefaultChannelCount);
             Tuning=next;
